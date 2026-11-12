@@ -111,12 +111,15 @@ def evaluar(p):
                                                     key=f"forzar_{clave}")
     if st.button("Extraer 3 requisitos con IA", icon=":material/auto_awesome:", type="primary",
                  disabled=not (lectura["evaluable"] and seguir), key=f"extraer_{clave}"):
-        with st.spinner("Leyendo las bases y comprobando cada cita en el texto… (puede tardar un minuto)"):
+        with st.spinner("Leyendo las páginas relevantes y comprobando cada cita en el texto…"):
             try:
-                resultado = evaluador.extraer_requisitos(lectura)
+                paginas = evaluador.seleccionar_paginas(lectura)
+                resultado = evaluador.extraer_requisitos(lectura, paginas)
                 st.session_state[f"req_{clave}"] = {
                     "requisitos": evaluador.verificar(resultado["requisitos"], lectura["paginas"], lectura["ocr"]),
-                    "modelo": resultado["modelo"], "segundos": resultado["segundos"]}
+                    "modelo": resultado["modelo"], "segundos": resultado["segundos"],
+                    "costo_usd": resultado["costo_usd"], "enviadas": resultado["paginas_enviadas"],
+                    "total": len(lectura["paginas"]), "sin_leer": list(lectura["sin_leer"])}
             except evaluador.ErrorIA as e:
                 st.session_state[f"req_{clave}"] = {"error": str(e)}
     res = st.session_state.get(f"req_{clave}")
@@ -129,8 +132,7 @@ def evaluar(p):
 
 
 def checklist(res, clave):
-    falta = {m: [] for m in evaluador.MOMENTOS}
-    revisar, tengo = [], 0
+    marcados = []
     for i, r in enumerate(res["requisitos"], 1):
         verificado = r["estado"] == evaluador.VERIFICADO
         with st.container(border=True):
@@ -143,27 +145,34 @@ def checklist(res, clave):
             st.markdown(f"**Qué se pide:** {md(r['que_se_pide'])}  \n"
                         f"**Dónde:** página {r['pagina']} del PDF ({r['origen']}) · {md(r['seccion'])}")
             st.markdown("> " + md(r["fragmento"]))
+            if r["respaldos"]:
+                filas = []
+                for c in r["respaldos"]:
+                    marca = "✅" if c["estado"] == evaluador.VERIFICADO else "❔"
+                    filas.append(f"- {marca} **{md(c['dato'])}** — página {c['pagina']} ({c['origen']}) · "
+                                 f"{md(c['seccion'])}: «{md(c['fragmento'])}»"
+                                 + ("" if c["estado"] == evaluador.VERIFICADO else f" — _{md(c['verificacion'])}_"))
+                st.markdown("**Respaldos en las bases**\n\n" + "\n".join(filas))
             st.caption(f"Comprobación: {md(r['verificacion'].rstrip('. '))}.")
-            if st.checkbox("Lo tengo", key=f"tengo_{clave}_{i}"):
-                tengo += 1
-            elif verificado:
-                falta[r["momento"]].append(r["requisito"])
-            else:
-                revisar.append(r["requisito"])
-    total = len(res["requisitos"])
+            marcados.append(st.checkbox("Lo tengo", key=f"tengo_{clave}_{i}"))
+    lista = evaluador.resumen_lista(res["requisitos"], marcados)
+    lineas = [f"- **{etiqueta}, sin marcar:** " + "; ".join(md(n) for n in nombres)
+              for etiqueta, nombres in lista["sin_marcar"].items()]
+    if lista["por_verificar"]:
+        lineas.append("- **Por verificar en las bases** (aunque lo marques): "
+                      + "; ".join(md(n) for n in lista["por_verificar"]))
     with st.container(border=True):
-        st.markdown(f"**Tu lista: tienes {tengo} de {total}**")
-        lineas = []
-        etiquetas = {"Con la oferta": "Para la oferta", "Para perfeccionar el contrato": "Para el contrato, si ganas",
-                     "No lo indica": "Sin momento indicado"}
-        for momento, nombres in falta.items():
-            if nombres:
-                lineas.append(f"- **{etiquetas[momento]}:** te falta " + "; ".join(md(n) for n in nombres))
-        if revisar:
-            lineas.append("- **Por verificar en las bases:** " + "; ".join(md(n) for n in revisar))
-        st.markdown("\n".join(lineas) if lineas else "No te queda nada pendiente de lo que se extrajo.")
-    st.caption(f"Extraído con {res['modelo']} (salida estructurada, {res['segundos']:.0f} s) y comprobado contra el "
-               "texto del PDF. Revisa siempre las bases completas antes de postular.")
+        st.markdown(f"**Tu lista: {lista['titulo']}**")
+        if lineas:
+            st.markdown("\n".join(lineas))
+    enviadas = res.get("enviadas") or []
+    st.caption(f"Extraído con {res['modelo']} (salida estructurada). Se enviaron {len(enviadas)} de {res.get('total')} "
+               f"páginas, con su número original ({evaluador.rangos(enviadas)}) · {res['segundos']:.0f} s · costo de "
+               f"referencia US$ {res.get('costo_usd') or 0:.2f}. Revisa siempre las bases completas antes de postular.")
+    if res.get("sin_leer"):
+        st.warning(f"Análisis incompleto: las páginas {evaluador.rangos(res['sin_leer'])} son imágenes que aún no "
+                   "tenían OCR al extraer; lo que digan (por ejemplo, partes del requerimiento) no se analizó.",
+                   icon=":material/document_scanner:")
 
 
 st.set_page_config(page_title="LicitaPerú", page_icon="🔎", layout="centered")

@@ -142,8 +142,34 @@ def aplicar_ocr(lectura, carpeta=None):
     return lectura | {"paginas": paginas, "ocr": hechas, "sin_leer": faltan}
 
 
-# 4 · Extracción con salida estructurada
+# 4 · Páginas relevantes: solo se envían al modelo las que tratan de lo que el proveedor debe preparar
 
+CLAVES_RELEVANTES = {"documentos para la admision": 3, "no admitida": 2, "requisitos de calificacion": 2,
+                     "experiencia del postor": 3, "monto facturado": 3, "perfeccionar el contrato": 3,
+                     "garantia de fiel cumplimiento": 2, "fideicomiso": 1, "retencion": 1, "plazo de entrega": 3,
+                     "condiciones de contratacion": 3,   # el requerimiento trae aquí el plazo de entrega
+                     "fichas tecnicas": 3, "conste por el presente documento": 4,   # inicio de la proforma del contrato
+                     "acreditacion": 1}
+UMBRAL_RELEVANCIA = 4
+MAX_PAGINAS = 18
+
+
+def seleccionar_paginas(lectura):
+    """Números originales de las páginas que tratan de admisión, calificación, contrato, garantía y plazos."""
+    puntos = {}
+    for i, texto in enumerate(lectura["paginas"], 1):
+        normalizado = _norm(texto)
+        suma = sum(peso for clave, peso in CLAVES_RELEVANTES.items() if clave in normalizado)
+        if suma >= UMBRAL_RELEVANCIA:
+            puntos[i] = suma
+    return sorted(sorted(puntos, key=lambda i: (-puntos[i], i))[:MAX_PAGINAS])
+
+
+# 5 · Extracción con salida estructurada
+
+_CITA = {"pagina": {"type": "integer", "description": "Número del marcador [PÁGINA n] donde está el fragmento"},
+         "seccion": {"type": "string", "description": "Numeral y título de la sección tal como aparecen"},
+         "fragmento": {"type": "string", "description": "Cita literal y breve del texto, sin cambiar palabras"}}
 ESQUEMA = {
     "type": "object",
     "properties": {"requisitos": {"type": "array", "minItems": 1, "maxItems": 3, "items": {
@@ -153,12 +179,17 @@ ESQUEMA = {
             "que_se_pide": {"type": "string", "description": "Lo que se exige en concreto: montos, plazos, documentos"},
             "momento": {"type": "string", "enum": MOMENTOS,
                         "description": "Cuándo se presenta, según las bases"},
-            "pagina": {"type": "integer", "description": "Número del marcador [PÁGINA n] donde está el fragmento"},
-            "seccion": {"type": "string", "description": "Numeral y título de la sección tal como aparecen"},
-            "fragmento": {"type": "string", "description": "Cita literal y breve del texto, sin cambiar palabras"},
+            **_CITA,
+            "respaldos": {"type": "array", "minItems": 1, "maxItems": 10, "items": {
+                "type": "object",
+                "properties": {"dato": {"type": "string",
+                                        "description": "La cifra, condición, documento o etapa que respalda la cita"},
+                               **_CITA},
+                "required": ["dato", "pagina", "seccion", "fragmento"], "additionalProperties": False}},
             "ambiguo": {"type": "boolean", "description": "true si el requisito no es claro o falta un dato"},
             "nota": {"type": "string", "description": "Qué es ambiguo o qué falta; vacío si nada"}},
-        "required": ["requisito", "que_se_pide", "momento", "pagina", "seccion", "fragmento", "ambiguo", "nota"],
+        "required": ["requisito", "que_se_pide", "momento", "pagina", "seccion", "fragmento", "respaldos", "ambiguo",
+                     "nota"],
         "additionalProperties": False}}},
     "required": ["requisitos"], "additionalProperties": False}
 
@@ -166,16 +197,25 @@ SISTEMA = ("Eres analista de contrataciones públicas del Perú. Ayudas a peque�
            "las bases de un procedimiento de selección. Solo usas el texto que te entregan; nunca inventas requisitos.")
 
 
-def _pedido(lectura):
+def _pedido(lectura, paginas=None):
+    """El texto para el modelo. Con «paginas», solo esas, con su número original del PDF."""
     ocr, sin_leer = set(lectura.get("ocr", [])), set(lectura.get("sin_leer", []))
+    total = len(lectura["paginas"])
+    enviar = paginas or list(range(1, total + 1))
     bloques = []
-    for i, t in enumerate(lectura["paginas"], 1):
+    for i in enviar:
         if i in sin_leer:
             bloques.append(f"[PÁGINA {i} · imagen sin texto: no se pudo leer]")
         else:
-            bloques.append(f"[PÁGINA {i}{' · texto obtenido por OCR' if i in ocr else ''}]\n{t.strip()}")
-    aviso = (f"\nOJO: las páginas {rangos(sin_leer)} son imágenes que no se pudieron leer. Si un requisito remite a "
-             "ellas, dilo en la nota y marca ambiguo=true." if sin_leer else "")
+            bloques.append(f"[PÁGINA {i}{' · texto obtenido por OCR' if i in ocr else ''}]\n"
+                           f"{lectura['paginas'][i - 1].strip()}")
+    aviso = ""
+    if paginas:
+        aviso += (f"\nSolo recibes {len(enviar)} de las {total} páginas, elegidas porque tratan de admisión, "
+                  "calificación, contrato, garantía o plazos. Los números son los del PDF original.")
+    if sin_leer:
+        aviso += (f"\nOJO: las páginas {rangos(sin_leer)} del PDF son imágenes que no se pudieron leer. Si un "
+                  "requisito remite a ellas o podría estar en ellas, dilo en la nota y marca ambiguo=true.")
     return f"""Estas son las bases de un procedimiento de selección del Estado peruano, página por página:
 
 {chr(10).join(bloques)}
@@ -188,6 +228,7 @@ Para cada uno indica:
 - pagina: el número n del marcador [PÁGINA n] donde está el fragmento;
 - seccion: el numeral y el título tal como aparecen en las bases;
 - fragmento: una cita breve (máximo 200 caracteres) copiada literalmente del texto de esa página, sin cambiar ni una palabra;
+- respaldos: separa cada cifra, condición, documento y la etapa (cuándo se presenta) en su propio respaldo, con el dato, su página, su sección y una cita literal breve (máximo 160 caracteres) que lo pruebe. Si un documento forma parte de una lista, cita su literal. Si un dato no tiene una cita que lo pruebe, no lo pongas en que_se_pide;
 - ambiguo y nota: si algo no es claro, falta un dato, hay una contradicción o depende de otro documento, ambiguo=true y explica qué en la nota.
 No completes con conocimiento general: si no lo ves en el texto, no lo pongas."""
 
@@ -198,10 +239,12 @@ def _registrar(fila):
         f.write(json.dumps(fila, ensure_ascii=False) + "\n")
 
 
-def extraer_requisitos(lectura):
-    """Llama al modelo con el esquema y devuelve {"requisitos": [...], "modelo", "segundos", "costo_usd"}."""
+def extraer_requisitos(lectura, paginas=None):
+    """Llama al modelo con el esquema (solo con «paginas», si se dan) y devuelve
+    {"requisitos": [...], "modelo", "segundos", "costo_usd", "paginas_enviadas"}."""
     if isinstance(lectura, list):   # compatibilidad: lista de páginas
         lectura = {"paginas": lectura}
+    enviadas = paginas or list(range(1, len(lectura["paginas"]) + 1))
     cli = shutil.which(CLI)
     if not cli:
         raise ErrorIA("no se encontró la CLI de Claude Code en esta computadora")
@@ -210,11 +253,11 @@ def extraer_requisitos(lectura):
                "--system-prompt", SISTEMA, "--json-schema", json.dumps(ESQUEMA)]
     inicio = time.perf_counter()
     fila = {"momento": datetime.now().astimezone().isoformat(timespec="seconds"), "modelo_pedido": MODELO,
-            "paginas": len(lectura["paginas"]), "huella_pdf": lectura.get("huella"), "ocr": lectura.get("ocr", []),
-            "sin_leer": lectura.get("sin_leer", [])}
+            "paginas": len(lectura["paginas"]), "paginas_enviadas": enviadas, "huella_pdf": lectura.get("huella"),
+            "ocr": lectura.get("ocr", []), "sin_leer": lectura.get("sin_leer", [])}
     with tempfile.TemporaryDirectory() as carpeta:   # carpeta vacía: no se carga ningún CLAUDE.md
         try:
-            proceso = subprocess.run(comando, input=_pedido(lectura), capture_output=True, text=True,
+            proceso = subprocess.run(comando, input=_pedido(lectura, paginas), capture_output=True, text=True,
                                      encoding="utf-8", timeout=SEGUNDOS_MAX, cwd=carpeta)
         except subprocess.TimeoutExpired:
             _registrar(fila | {"ok": False, "error": "timeout"})
@@ -235,40 +278,89 @@ def extraer_requisitos(lectura):
     _registrar(fila | {"ok": True, "modelo": modelo, "costo_usd": salida.get("total_cost_usd"),
                        "salida": estructurada})
     return {"requisitos": estructurada.get("requisitos", [])[:3], "modelo": modelo, "segundos": fila["segundos"],
-            "costo_usd": salida.get("total_cost_usd")}
+            "costo_usd": salida.get("total_cost_usd"), "paginas_enviadas": enviadas}
 
 
-# 5 · Verificación contra el texto
+# 6 · Verificación contra el texto
 
 def _norm(texto):
     sin_tildes = unicodedata.normalize("NFD", str(texto).lower()).encode("ascii", "ignore").decode()
     return re.sub(r"\s+", " ", re.sub(r"[\"'«»“”‘’…]", " ", sin_tildes)).strip()
 
 
+def _comprobar(cita, normalizadas, ocr):
+    """(¿aparece literal en la página citada?, explicación, origen) para una cita {pagina, fragmento}."""
+    fragmento = _norm(cita.get("fragmento", "")).strip(" .")
+    pagina = cita.get("pagina")
+    origen = "texto por OCR" if pagina in ocr else "texto del PDF"
+    if len(fragmento) < 15:
+        return False, "el fragmento es demasiado corto para comprobarlo", origen
+    if isinstance(pagina, int) and 1 <= pagina <= len(normalizadas) and fragmento in normalizadas[pagina - 1]:
+        return True, f"aparece literal en la página {pagina} ({origen})", origen
+    otras = [i for i, t in enumerate(normalizadas, 1) if fragmento in t]
+    return False, (f"está en la página {otras[0]}, no en la {pagina}" if otras
+                   else "no aparece literal en el documento"), origen
+
+
 def verificar(requisitos, paginas, ocr=()):
-    """Agrega «estado», «verificacion» y «origen» a cada requisito: el fragmento debe estar literal en la página."""
+    """Comprueba cada cita (la principal y cada respaldo) contra el texto de su página.
+
+    Un requisito queda «Verificado en el texto» solo si todas sus citas aparecen literales y no es ambiguo; si no,
+    «Por verificar», con el motivo. Cada respaldo lleva su propio estado.
+    """
     normalizadas = [_norm(p) for p in paginas]
     salida = []
     for r in requisitos:
         r = dict(r)
-        fragmento = _norm(r.get("fragmento", "")).strip(" .")
-        pagina = r.get("pagina")
-        r["origen"] = "texto por OCR" if pagina in ocr else "texto del PDF"
         if r.get("momento") not in MOMENTOS:
             r["momento"] = "No lo indica"
-        if len(fragmento) < 15:
-            r["estado"], r["verificacion"] = POR_VERIFICAR, "el fragmento es demasiado corto para comprobarlo"
-        elif isinstance(pagina, int) and 1 <= pagina <= len(paginas) and fragmento in normalizadas[pagina - 1]:
-            if r.get("ambiguo"):
-                r["estado"], r["verificacion"] = POR_VERIFICAR, f"el fragmento está en la página {pagina}, pero " \
-                                                                f"el requisito es ambiguo: {r.get('nota') or 'sin nota'}"
-            else:
-                r["estado"] = VERIFICADO
-                r["verificacion"] = f"el fragmento aparece literal en la página {pagina} ({r['origen']})"
-        else:
-            otras = [i for i, t in enumerate(normalizadas, 1) if fragmento in t]
+        ok, explicacion, r["origen"] = _comprobar(r, normalizadas, ocr)
+        respaldos = []
+        for c in r.get("respaldos") or []:
+            c = dict(c)
+            c_ok, c["verificacion"], c["origen"] = _comprobar(c, normalizadas, ocr)
+            c["estado"] = VERIFICADO if c_ok else POR_VERIFICAR
+            respaldos.append(c)
+        r["respaldos"] = respaldos
+        fallan = [c for c in respaldos if c["estado"] != VERIFICADO]
+        if not ok:
+            r["estado"], r["verificacion"] = POR_VERIFICAR, f"la cita principal {explicacion}"
+        elif fallan:
             r["estado"] = POR_VERIFICAR
-            r["verificacion"] = (f"el fragmento está en la página {otras[0]}, no en la {pagina}" if otras
-                                 else "el fragmento no aparece literal en el documento")
+            r["verificacion"] = (f"{len(fallan)} de {len(respaldos)} respaldos no se pudieron comprobar: "
+                                 + "; ".join(f"{c['dato']} ({c['verificacion']})" for c in fallan))
+        elif not respaldos:
+            r["estado"], r["verificacion"] = POR_VERIFICAR, "el modelo no dio respaldos para cada dato"
+        elif r.get("ambiguo"):
+            r["estado"] = POR_VERIFICAR
+            r["verificacion"] = (f"todas las citas aparecen literales, pero el requisito es ambiguo: "
+                                 f"{r.get('nota') or 'sin nota'}")
+        else:
+            r["estado"] = VERIFICADO
+            r["verificacion"] = f"la cita principal y los {len(respaldos)} respaldos aparecen literales en sus páginas"
         salida.append(r)
     return salida
+
+
+# 7 · La lista del proveedor
+
+ETIQUETAS_MOMENTO = {"Con la oferta": "Para la oferta", "Para perfeccionar el contrato": "Para el contrato, si ganas",
+                     "No lo indica": "Sin momento indicado"}
+
+
+def resumen_lista(requisitos, marcados):
+    """Separa lo que el proveedor marcó («Lo tengo») de lo que el evaluador pudo verificar en las bases.
+
+    Marcar no cambia la verificación: un requisito marcado sigue «por verificar» si sus citas no se confirmaron.
+    """
+    total = len(requisitos)
+    por_verificar = [r["requisito"] for r in requisitos if r["estado"] != VERIFICADO]
+    titulo = f"{sum(bool(m) for m in marcados)} de {total} marcados · " + (
+        f"{len(por_verificar)} por verificar en las bases" if por_verificar
+        else f"{'los' if total > 1 else 'el'} {total} verificados en las bases")
+    sin_marcar = {}
+    for momento, etiqueta in ETIQUETAS_MOMENTO.items():
+        nombres = [r["requisito"] for r, m in zip(requisitos, marcados) if not m and r["momento"] == momento]
+        if nombres:
+            sin_marcar[etiqueta] = nombres
+    return {"titulo": titulo, "sin_marcar": sin_marcar, "por_verificar": por_verificar}
