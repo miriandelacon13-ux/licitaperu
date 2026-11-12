@@ -14,9 +14,7 @@ Hacemos **que un pequeño proveedor sepa en minutos si puede postular a una comp
 
 ## 2. Founder
 
-**Mirian de la Cruz Condori**, participante de la Diplomatura de Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP).
-
-> **PENDIENTE (Mirian):** por qué eres la persona indicada para este problema (experiencia con compras públicas, proveedores o MYPE, contexto regional, etc.). No se completa con suposiciones.
+Soy Mirian de la Cruz Condori, estudiante de Ingeniería Económica. Mi experiencia en el Banco de la Nación me permitió conocer de cerca la importancia de revisar documentos y dar seguimiento a plazos. Creé LicitaPerú para que los pequeños proveedores puedan revisar una oportunidad de compra pública, localizar el sustento de cada requisito y organizar lo que les falta antes de preparar su oferta.
 
 ## 3. Problema
 
@@ -31,7 +29,7 @@ Hacemos **que un pequeño proveedor sepa en minutos si puede postular a una comp
 
 **Cómo lo resuelve hoy.** El SEACE ofrece un buscador y la app «Oportunidades de negocio» (alertas por correo), pero no dice qué pide cada proceso: el proveedor lee el PDF completo o paga a un asesor. *Hipótesis por validar en las entrevistas.*
 
-**Conversaciones con usuarios potenciales:** [docs/research/](docs/research/). **PENDIENTE:** las 3 conversaciones todavía no se han realizado o no se han entregado; las plantillas están listas y no se completan con datos inventados.
+**Conversaciones con usuarios potenciales:** [docs/research/](docs/research/). **PENDIENTE:** todavía no hay conversaciones registradas. Solo se anotarán las que se realicen; las plantillas están listas y no se completan con datos inventados.
 
 ## 4. Solución e insight
 
@@ -59,7 +57,7 @@ Hacemos **que un pequeño proveedor sepa en minutos si puede postular a una comp
 Requisitos: [uv](https://docs.astral.sh/uv/) (probado con 0.13.6), Git, y para el evaluador la CLI de [Claude Code](https://claude.com/claude-code) con sesión iniciada.
 
 ```powershell
-git clone https://github.com/miriandelacon13-ux/licitaperu.git   # PENDIENTE: el repositorio aún no está publicado
+git clone https://github.com/miriandelacon13-ux/licitaperu.git
 cd licitaperu
 uv sync
 uv run streamlit run app.py --server.port 8503
@@ -166,7 +164,7 @@ El código, las pruebas y este README los generó **Claude Code** (modelo Claude
 - **Investigación de fuentes:** encontró los bloqueos (HTTP 403) del portal OCDS y de la descarga de documentos, y ubicó la API pública que usa la app oficial del SEACE. Verificó el filtro por departamento y detectó 299 ítems con fechas incoherentes.
 - **Código:** `radar.py`, `evaluador.py`, `ocr_bases.py`, `app.py` y 31 pruebas sin red (`pruebas/`).
 - **Validación:** recorridos en Edge sin ventana, capturas y contraste manual de cada cita con el PDF y con las páginas escaneadas.
-- **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso y validó los resultados. **Pendiente:** las 3 conversaciones con usuarios, el apartado «Founder», el video de respaldo y la publicación.
+- **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso, validó los resultados y escribió el apartado «Founder». **Pendiente:** las 3 conversaciones con usuarios, el video de respaldo y la URL pública del demo.
 
 ---
 
