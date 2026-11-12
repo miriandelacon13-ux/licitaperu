@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+# credenciales locales (nunca al repo)
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+# copias de la API del SEACE y bitácoras locales
+/datos/
+/registros/
+# bases descargadas a mano: se decide aparte si se publican
+docs/bases/*.pdf

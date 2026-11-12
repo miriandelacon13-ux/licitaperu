@@ -1,0 +1,21 @@
+[project]
+name = "licitaperu"
+version = "0.1.0"
+description = "LicitaPerú: radar de compras públicas y evaluador de requisitos para pequeños proveedores"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx",
+    "pandas",
+    "pypdf",
+    "streamlit",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+ocr = [
+    "paddleocr==3.7.0",
+    "paddlepaddle==3.3.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["pruebas"]
