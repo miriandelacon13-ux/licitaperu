@@ -48,10 +48,11 @@ def test_radar_ferreteria_y_ficha_del_caso(fuente_simulada):
     textos = _textos(at)
     assert "MUNICIPALIDAD METROPOLITANA DE LIMA" in textos
     assert "**Registro de participantes:** del 04/11/2026 00:01 al 09/12/2026 23:59" in textos
-    assert "puedes registrarte hasta el 09/12/2026 23:59 (quedan 28 días)" in textos
-    assert "Registro abierto" in textos and "Pendiente" in textos
-    assert "**Plazo de propuestas:** 10/12/2026 00:01" in textos
-    assert "Plazo de propuestas: 10/12/2026 00:01 (quedan 28 días)." in textos
+    assert "Puedes registrarte hasta el 09/12/2026 23:59 (quedan 28 días)." in textos
+    assert "✓ Registro abierto</span>" in textos and "◷ Pendiente</span>" in textos   # texto + símbolo, no solo color
+    assert "Presentación de propuestas</div><div class=\"lp-fecha\">10/12/2026 00:01</div>" in textos
+    assert "10/12/2026 00:01 (quedan 28 días)." in textos
+    assert "hasta 09/12/2026 23:59" in textos and "**Qué compra:** ADQUISICIÓN DE MATERIALES FERRETEROS" in textos
     assert "fileCode=db513705-7e82-4501-9564-6c0c34cc7893" in textos
     assert "no publicado en la fuente" in textos
     assert "consultado el 11/11/2026 22:12" in textos
@@ -109,17 +110,24 @@ def test_caso_de_ejemplo_sin_pdf_ni_api_ni_clave(monkeypatch):
     assert "página 22 (texto del PDF)" in textos and "página 50 (texto por OCR)" in textos
 
     def estados():
-        return [m.value for m in at.markdown if "Verificado en el texto" in m.value or "Por verificar]" in m.value]
+        return [m.value for m in at.markdown if 'class="lp-chip' in m.value and "lp-etapa" in m.value]
 
     def lista():
         return next(m.value for m in at.markdown if m.value.startswith("**Tu lista:"))
 
+    def contador():
+        return next(m.value for m in at.markdown if "Tu checklist" in m.value)
+
     antes = estados()
+    assert len(antes) == 3 and all('lp-verificar">⚠ Por verificar</span>' in e for e in antes)   # ámbar + texto
+    assert "Etapa: con la oferta" in antes[0] and "Etapa: para el contrato, si ganas" in antes[2]
     assert lista() == "**Tu lista: 0 de 3 marcados · 3 por verificar en las bases**"
+    assert "<b>0 de 3 marcados · 3 por verificar en las bases</b>" in contador()
     casillas = [c for c in at.checkbox if c.label == "Lo tengo"]
     assert len(casillas) == 3
     casillas[0].check().run()
     assert lista() == "**Tu lista: 1 de 3 marcados · 3 por verificar en las bases**" and estados() == antes
+    assert "<b>1 de 3 marcados · 3 por verificar en las bases</b>" in contador()   # el contador de arriba también
     [c for c in at.checkbox if c.label == "Lo tengo"][2].check().run()
     assert lista() == "**Tu lista: 2 de 3 marcados · 3 por verificar en las bases**" and estados() == antes
     [c for c in at.checkbox if c.label == "Lo tengo"][0].uncheck().run()

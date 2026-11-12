@@ -8,6 +8,7 @@ escaneadas, ocr_bases.py), un LLM con salida estructurada extrae 3 requisitos y 
 (evaluador.py). «Ver caso de ejemplo» abre el caso de la MML con una extracción guardada: no necesita el PDF, ni OCR,
 ni clave de API.
 """
+import html
 import re
 
 import pandas as pd
@@ -16,16 +17,55 @@ import streamlit as st
 import evaluador
 import radar
 
-COLORES = {radar.ABIERTO: "green", radar.POR_ABRIR: "orange", radar.CERRADO: "gray", radar.POR_VERIFICAR: "orange",
-           "Pendiente": "blue", "Vencido": "gray"}
-ICONOS = {radar.ABIERTO: ":material/event_available:", radar.POR_ABRIR: ":material/schedule:",
-          radar.CERRADO: ":material/event_busy:", radar.POR_VERIFICAR: ":material/help:",
-          "Pendiente": ":material/schedule:", "Vencido": ":material/event_busy:"}
+# Estados: siempre texto + símbolo + color (el color nunca va solo). El ámbar es solo para «Por verificar».
+CHIPS = {radar.ABIERTO: ("abierto", "✓"), radar.POR_ABRIR: ("info", "◷"), radar.CERRADO: ("gris", "✕"),
+         radar.POR_VERIFICAR: ("verificar", "⚠"), "Pendiente": ("info", "◷"), "Vencido": ("gris", "✕"),
+         evaluador.VERIFICADO: ("abierto", "✓"), evaluador.POR_VERIFICAR: ("verificar", "⚠")}
+ETAPAS = {"Con la oferta": "Etapa: con la oferta", "Para perfeccionar el contrato": "Etapa: para el contrato, si ganas",
+          "No lo indica": "Etapa: no indicada"}
+ESTILOS = """
+<style>
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5 { color: #0B4A52; }
+.lp-lema { font-size: 1.08rem; line-height: 1.45; color: #24343A; margin: 0 0 .2rem 0; }
+.lp-chip { display: inline-block; padding: .12rem .62rem; margin: .12rem .4rem .12rem 0; border: 1px solid;
+           border-radius: 999px; font-size: .86rem; font-weight: 600; line-height: 1.5; }
+.lp-abierto { color: #17603C; background: #E3F2E9; border-color: #9FCDB2; }
+.lp-info { color: #0B4A52; background: #E2EFF0; border-color: #9CC3C7; }
+.lp-gris { color: #3E4A52; background: #ECEEEF; border-color: #C4CBCF; }
+.lp-verificar { color: #7A4A00; background: #FFF1D6; border-color: #E0A23A; }
+.lp-etapa { color: #0B4A52; background: #FFFFFF; border-color: #9CC3C7; }
+.lp-plazo { border: 1px solid #E4DCCF; border-radius: .6rem; padding: .65rem .8rem; background: #FFFDF9;
+            margin-bottom: .5rem; }
+.lp-plazo .lp-etiqueta { font-size: .78rem; font-weight: 700; color: #5B6770; text-transform: uppercase;
+                         letter-spacing: .04em; }
+.lp-plazo .lp-fecha { font-size: 1.15rem; font-weight: 700; color: #1F2A30; margin: .1rem 0 .2rem 0; }
+.lp-plazo .lp-nota { font-size: .86rem; color: #45535B; margin-top: .2rem; }
+.lp-contador { border-left: 4px solid #0E5A63; background: #EEF5F5; padding: .55rem .8rem; border-radius: .4rem;
+               margin: .3rem 0 .6rem 0; color: #1F2A30; box-shadow: 0 2px 6px rgba(31, 42, 48, .08); }
+/* el contador queda fijo arriba mientras se recorren los requisitos (útil en celular) */
+[data-testid="stElementContainer"]:has(.lp-contador) { position: sticky; top: 3.75rem; z-index: 20; }
+.lp-pista { font-size: .86rem; color: #7A4A00; margin: .1rem 0 .3rem 0; }
+</style>
+"""
 
 
 def md(texto):
     """Texto de la fuente sin que Markdown lo interprete."""
     return re.sub(r"([\\`*_{}\[\]<>#+|$~])", r"\\\1", str(texto))
+
+
+def chip(estado, texto=None):
+    """Etiqueta de estado en HTML: símbolo + texto + color. Todo el texto se escapa."""
+    clase, simbolo = CHIPS.get(estado, ("gris", "•"))
+    return f'<span class="lp-chip lp-{clase}">{simbolo} {html.escape(texto or estado)}</span>'
+
+
+def chip_etapa(momento):
+    return f'<span class="lp-chip lp-etapa">{html.escape(ETAPAS.get(momento, momento))}</span>'
+
+
+def html_md(fragmento):
+    st.markdown(fragmento, unsafe_allow_html=True)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -39,35 +79,44 @@ def leer(datos):
     return evaluador.leer_pdf(datos)
 
 
+def plazo(etiqueta, fecha, estado, nota):
+    return (f'<div class="lp-plazo"><div class="lp-etiqueta">{html.escape(etiqueta)}</div>'
+            f'<div class="lp-fecha">{html.escape(fecha)}</div>{chip(estado)}'
+            f'<div class="lp-nota">{html.escape(nota[:1].upper() + nota[1:])}.</div></div>')
+
+
 def ficha(p, caso=None):
     registro, detalle = radar.estado(p)
     propuestas, detalle_propuestas = radar.estado_propuestas(p)
     with st.container(border=True):
         st.subheader(p["codigo"])
-        st.badge(registro, color=COLORES[registro], icon=ICONOS[registro])
-        st.caption(f"Calculado con las fechas del registro de participantes del SEACE, en hora de Lima: {detalle}.")
-        st.markdown(f"**Entidad:** {md(p['entidad'])}  \n"
-                    f"**Objeto:** {md(p['objeto'])} · {md(p['tipo'])}  \n"
-                    f"**Qué compra:** {md(p['sintesis'])}  \n"
-                    f"**Valor referencial:** {md(p['valor_referencial']) if p['valor_referencial'] else 'no publicado en la fuente'}")
-        st.markdown(f"**Convocatoria:** {radar.texto_fecha(p['convocatoria'])}  \n"
-                    f"**Registro de participantes:** del {radar.texto_fecha(p['registro_inicio'])} al "
-                    f"{radar.texto_fecha(p['registro_fin'])}")
-        c1, c2 = st.columns([3, 2], vertical_alignment="center")
-        c1.markdown(f"**Plazo de propuestas:** {radar.texto_fecha(p['propuestas'])}")
-        c2.badge(propuestas, color=COLORES[propuestas], icon=ICONOS[propuestas])
-        st.caption(f"Plazo de propuestas: {detalle_propuestas}.")
-        items = pd.DataFrame(p["items"]).rename(columns={"nro": "Ítem", "tipo": "Tipo", "descripcion": "Descripción",
-                                                          "cubso": "Catálogo (CUBSO)", "cantidad": "Cantidad",
-                                                          "unidad": "Unidad"})
-        st.dataframe(items, hide_index=True, width="stretch")
+        st.caption(f"{p['objeto']} · {p['tipo']} · convocado el {radar.texto_fecha(p['convocatoria'])}")
+        st.markdown(f"**Qué compra:** {md(p['sintesis'])}  \n**Entidad:** {md(p['entidad'])}")
+        c1, c2 = st.columns(2)
+        with c1:
+            html_md(plazo("Registro de participantes", f"hasta {radar.texto_fecha(p['registro_fin'])}", registro,
+                          detalle))
+        with c2:
+            html_md(plazo("Presentación de propuestas", radar.texto_fecha(p["propuestas"]), propuestas,
+                          detalle_propuestas))
+        st.caption("Plazos calculados con las fechas del SEACE, en hora de Lima.")
+        with st.expander("Más datos del proceso"):
+            st.markdown(f"**Objeto:** {md(p['objeto'])} · {md(p['tipo'])}  \n"
+                        f"**Convocatoria:** {radar.texto_fecha(p['convocatoria'])}  \n"
+                        f"**Registro de participantes:** del {radar.texto_fecha(p['registro_inicio'])} al "
+                        f"{radar.texto_fecha(p['registro_fin'])}  \n"
+                        f"**Valor referencial:** "
+                        f"{md(p['valor_referencial']) if p['valor_referencial'] else 'no publicado en la fuente'}")
+            items = pd.DataFrame(p["items"]).rename(columns={"nro": "Ítem", "tipo": "Tipo",
+                                                              "descripcion": "Descripción", "cubso": "Catálogo (CUBSO)",
+                                                              "cantidad": "Cantidad", "unidad": "Unidad"})
+            st.dataframe(items, hide_index=True, width="stretch")
         enlaces = []
         if p["url_bases"]:
-            enlaces.append(f"- [Bases del proceso (PDF) en el SEACE]({p['url_bases']})")
-        enlaces.append(f"- [Buscador público del SEACE]({radar.URL_BUSCADOR}): busca la nomenclatura "
-                       f"«{md(p['codigo'])}» para abrir la ficha")
-        enlaces.append(f"- [Oportunidades de negocio del SEACE]({radar.URL_APP_OFICIAL})")
-        st.markdown("**Enlaces oficiales**\n\n" + "\n".join(enlaces))
+            enlaces.append(f"[Bases del proceso (PDF) en el SEACE]({p['url_bases']})")
+        enlaces.append(f"[Buscador público del SEACE]({radar.URL_BUSCADOR}) (busca «{md(p['codigo'])}»)")
+        enlaces.append(f"[Oportunidades de negocio del SEACE]({radar.URL_APP_OFICIAL})")
+        st.markdown("**Enlaces oficiales:** " + " · ".join(enlaces))
         if caso:
             extraccion_guardada(caso)
         else:
@@ -77,7 +126,7 @@ def ficha(p, caso=None):
 def extraccion_guardada(caso):
     """El análisis publicado del caso de ejemplo: sin PDF, sin OCR en vivo y sin llamar al modelo."""
     st.markdown("#### ¿Qué te piden para postular?")
-    st.badge("Extracción guardada", icon=":material/history:", color="gray")
+    html_md('<span class="lp-chip lp-info">◷ Extracción guardada</span>')
     b, e = caso["bases"], caso["extraccion"]
     st.caption(f"Bases revisadas en local: {md(b['documento'])} ({b['paginas']} páginas; el número del proceso aparece "
                f"en {b['menciona_el_numero_en']}). Metadatos del PDF: {b['creado']}; "
@@ -168,30 +217,36 @@ def evaluar(p):
 
 
 def checklist(res, clave):
+    requisitos = res["requisitos"]
+    claves = [f"tengo_{clave}_{i}" for i in range(1, len(requisitos) + 1)]
+    # Contador arriba, con lo marcado hasta ahora (las casillas guardan su estado en la sesión).
+    arriba = evaluador.resumen_lista(requisitos, [bool(st.session_state.get(k)) for k in claves])
+    html_md(f'<div class="lp-contador">Tu checklist · <b>{html.escape(arriba["titulo"])}</b></div>')
     marcados = []
-    for i, r in enumerate(res["requisitos"], 1):
+    for i, (r, k) in enumerate(zip(requisitos, claves), 1):
         verificado = r["estado"] == evaluador.VERIFICADO
         with st.container(border=True):
             st.markdown(f"**{i}. {md(r['requisito'])}**")
-            c1, c2 = st.columns(2)
-            c1.badge(r["estado"], color="green" if verificado else "orange",
-                     icon=":material/verified:" if verificado else ":material/help:")
-            c2.badge(r["momento"], color="blue" if r["momento"] == "Con la oferta" else "violet",
-                     icon=":material/send:" if r["momento"] == "Con la oferta" else ":material/handshake:")
-            st.markdown(f"**Qué se pide:** {md(r['que_se_pide'])}  \n"
-                        f"**Dónde:** página {r['pagina']} del PDF ({r['origen']}) · {md(r['seccion'])}")
-            st.markdown("> " + md(r["fragmento"]))
-            if r["respaldos"]:
-                filas = []
-                for c in r["respaldos"]:
-                    marca = "✅" if c["estado"] == evaluador.VERIFICADO else "❔"
-                    filas.append(f"- {marca} **{md(c['dato'])}** — página {c['pagina']} ({c['origen']}) · "
-                                 f"{md(c['seccion'])}: «{md(c['fragmento'])}»"
-                                 + ("" if c["estado"] == evaluador.VERIFICADO else f" — _{md(c['verificacion'])}_"))
-                st.markdown("**Respaldos en las bases**\n\n" + "\n".join(filas))
-            st.caption(f"Comprobación: {md(r['verificacion'].rstrip('. '))}.")
-            marcados.append(st.checkbox("Lo tengo", key=f"tengo_{clave}_{i}"))
-    lista = evaluador.resumen_lista(res["requisitos"], marcados)
+            html_md(chip(r["estado"]) + chip_etapa(r["momento"]))
+            st.markdown(f"**Qué se pide:** {md(r['que_se_pide'])}")
+            if not verificado:
+                html_md('<div class="lp-pista">⚠ Revisa el motivo en «Citas y páginas» antes de dar el requisito por '
+                        "cumplido.</div>")
+            with st.expander(f"Citas y páginas · página {r['pagina']} y {len(r['respaldos'])} respaldos"):
+                st.markdown(f"**Dónde:** página {r['pagina']} del PDF ({r['origen']}) · {md(r['seccion'])}")
+                st.markdown("> " + md(r["fragmento"]))
+                if r["respaldos"]:
+                    filas = []
+                    for c in r["respaldos"]:
+                        marca = "✓ Verificado" if c["estado"] == evaluador.VERIFICADO else "⚠ Por verificar"
+                        filas.append(f"- **{md(c['dato'])}** ({marca}) — página {c['pagina']} ({c['origen']}) · "
+                                     f"{md(c['seccion'])}: «{md(c['fragmento'])}»"
+                                     + ("" if c["estado"] == evaluador.VERIFICADO
+                                        else f" — _{md(c['verificacion'])}_"))
+                    st.markdown("**Respaldos en las bases**\n\n" + "\n".join(filas))
+                st.caption(f"Comprobación: {md(r['verificacion'].rstrip('. '))}.")
+            marcados.append(st.checkbox("Lo tengo", key=k))
+    lista = evaluador.resumen_lista(requisitos, marcados)
     lineas = [f"- **{etiqueta}, sin marcar:** " + "; ".join(md(n) for n in nombres)
               for etiqueta, nombres in lista["sin_marcar"].items()]
     if lista["por_verificar"]:
@@ -221,20 +276,23 @@ def checklist(res, clave):
 
 
 st.set_page_config(page_title="LicitaPerú", page_icon="🔎", layout="centered")
+html_md(ESTILOS)
 st.title("LicitaPerú")
-st.caption("Compras públicas para pequeños proveedores: encuentra oportunidades y mira qué te falta para postular.")
 
 ia = evaluador.estado_ia()
 st.session_state.setdefault("ejemplo", False)
-e1, e2 = st.columns([2, 3], vertical_alignment="center")
-if st.session_state.ejemplo:
-    if e1.button("Volver al radar", icon=":material/arrow_back:"):
-        st.session_state.ejemplo = False
+with st.container(border=True):
+    html_md('<p class="lp-lema">Encuentra compras públicas abiertas en el SEACE y revisa, con citas de las bases, '
+            "qué te falta para postular.</p>")
+    e1, e2 = st.columns([2, 3], vertical_alignment="center")
+    if st.session_state.ejemplo:
+        if e1.button("Volver al radar", icon=":material/arrow_back:"):
+            st.session_state.ejemplo = False
+            st.rerun()
+    elif e1.button("Ver caso de ejemplo", icon=":material/menu_book:", type="primary"):
+        st.session_state.ejemplo = True
         st.rerun()
-elif e1.button("Ver caso de ejemplo", icon=":material/menu_book:"):
-    st.session_state.ejemplo = True
-    st.rerun()
-e2.caption(("✅ " if ia["disponible"] else "⚠️ ") + ia["detalle"])
+    e2.caption(("✅ " if ia["disponible"] else "⚠️ ") + ia["detalle"])
 
 if st.session_state.ejemplo:
     caso = evaluador.cargar_caso_ejemplo()
@@ -247,13 +305,16 @@ if st.session_state.ejemplo:
                "Estado.")
     st.stop()
 
-c1, c2 = st.columns([3, 2])
-palabras = c1.text_input("Palabras clave", value="ferretería",
-                         help="Busca en el código, la entidad, la síntesis y los ítems, sin importar tildes.")
-departamento = c2.selectbox("Departamento (según el SEACE)", ["Todo el Perú"] + list(radar.DEPARTAMENTOS.values()))
-c3, c4 = st.columns([3, 2])
-objeto = c3.selectbox("Objeto", ["Todos", "Bien", "Servicio", "Obra", "Consultoría de Obra"])
-solo_abiertos = c4.toggle("Solo con registro abierto", value=True)
+with st.container(border=True):
+    st.markdown("**Buscar oportunidades**")
+    c1, c2 = st.columns([3, 2])
+    palabras = c1.text_input("Palabras clave", value="ferretería",
+                             help="Busca en el código, la entidad, la síntesis y los ítems, sin importar tildes.")
+    departamento = c2.selectbox("Departamento (según el SEACE)",
+                                ["Todo el Perú"] + list(radar.DEPARTAMENTOS.values()))
+    c3, c4 = st.columns([3, 2], vertical_alignment="bottom")
+    objeto = c3.selectbox("Objeto", ["Todos", "Bien", "Servicio", "Obra", "Consultoría de Obra"])
+    solo_abiertos = c4.toggle("Solo con registro abierto", value=True)
 
 codigo_dep = next((c for c, n in radar.DEPARTAMENTOS.items() if n == departamento), "0")
 try:

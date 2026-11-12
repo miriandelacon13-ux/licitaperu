@@ -1,0 +1,9 @@
+# Tema de LicitaPerú: fondo blanco cálido y azul petróleo para acciones, enlaces y títulos.
+# El ámbar se reserva para «Por verificar» (estilos en app.py). Streamlit Community Cloud también lee este archivo.
+[theme]
+base = "light"
+primaryColor = "#0E5A63"
+backgroundColor = "#FBF8F3"
+secondaryBackgroundColor = "#F2ECE3"
+textColor = "#1F2A30"
+font = "sans serif"
