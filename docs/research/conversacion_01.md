@@ -1,23 +1,20 @@
-# Conversación 1 · PENDIENTE
+# Conversación 1 · Proveedora A
 
-- **Perfil buscado:** Dueña o dueño de ferretería que ya vendió al Estado
-- **Seudónimo:** PENDIENTE
-- **Fecha y medio (presencial, llamada, videollamada):** PENDIENTE
-- **Consentimiento para tomar notas:** PENDIENTE (sí/no)
-
-## Preguntas guía
-
-1. Cuéntame la última vez que buscaste una compra del Estado. ¿Dónde la encontraste?
-2. ¿Qué hiciste con las bases? ¿Cuánto tiempo te tomó revisarlas? ¿Quién las revisó?
-3. ¿Alguna vez no pudiste postular o tu oferta no fue admitida? ¿Por qué?
-4. ¿Qué requisito te costó más acreditar (experiencia, fichas técnicas, garantía, otro)?
-5. ¿Pagaste a alguien para revisar bases o preparar ofertas? ¿Cuánto?
-6. (Mostrar la demo) ¿Qué falta, sobra o no se entiende?
+- **Perfil o rubro:** dueña de una ferretería pequeña
+- **Seudónimo:** Proveedora A (sin nombre, RUC ni datos de contacto)
+- **Fecha y medio:** martes 10/11/2026, alrededor de las 10:00 (hora de Perú), por llamada
+- **Permiso para tomar notas:** no registrado
+- **Entrevistó y tomó notas:** Mirian de la Cruz Condori. Las notas son su paráfrasis, no citas textuales.
 
 ## Notas
 
-PENDIENTE: escribir aquí lo que dijo, con sus palabras cuando sea posible.
+**Cómo revisa las licitaciones y qué dificultad tiene.** Cuando encuentra una licitación de su rubro, revisa primero si cuenta con los productos y si puede entregar a tiempo. Comentó que una vez encontró un pedido que parecía bueno, pero al leer las bases descubrió que exigían una experiencia que no podía acreditar.
 
-## Qué confirma o contradice
+**Qué dijo sobre LicitaPerú.** Indicó que, para decidir más rápido, le ayudaría contar con una ficha que muestre el plazo y la experiencia requerida, acompañada de la página exacta para poder comprobarlo. Las notas no indican si se le mostró la app o solo se le explicó la idea.
 
-PENDIENTE: problema, precio (hipótesis S/ 39 al mes) y quién paga.
+## Qué apoya o contradice
+
+- **Apoya H1** (ver los requisitos decisivos al inicio ayuda a decidir si conviene preparar una oferta): descubrió tarde, al leer las bases, un requisito de experiencia que no podía acreditar.
+- **Pide lo que muestra la app:** plazo, experiencia requerida y página exacta (ficha con plazos y requisito de experiencia con su página).
+- **No se abordó:** precio, quién pagaría (H6) ni la alternativa que usa hoy (H5).
+- Es una sola conversación: apoya la hipótesis, no la valida.

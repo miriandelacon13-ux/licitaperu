@@ -27,9 +27,15 @@ Soy Mirian de la Cruz Condori, estudiante de Ingeniería Económica. Mi experien
 - Las bases se contradicen: la p. 46 pide **fichas técnicas o catálogos para la admisión**, pero la lista de documentos de admisión (pp. 22–23) no las incluye y prohíbe agregar documentos.
 - Si falta un documento de admisión, «**la oferta se considera no admitida**» (p. 22).
 
-**Cómo lo resuelve hoy.** El SEACE ofrece un buscador y la app «Oportunidades de negocio» (alertas por correo), pero no dice qué pide cada proceso: el proveedor lee el PDF completo o paga a un asesor. *Hipótesis por validar en las entrevistas.*
+**Cómo lo resuelve hoy.** El SEACE ofrece un buscador y la app «Oportunidades de negocio» (alertas por correo), pero no dice qué pide cada proceso: el proveedor lee el PDF completo o paga a un asesor. En las llamadas del 10/11/2026, quien prepara ofertas para una distribuidora contó que organiza los documentos en una lista de Excel; lo del asesor sigue por validar.
 
-**Conversaciones con usuarios potenciales:** [docs/research/](docs/research/). **PENDIENTE:** todavía no hay entrevistas reales registradas; solo se anotarán las que se realicen. Para prepararlas hay [tres conversaciones simuladas](docs/research/conversaciones_simuladas.md) (no son evidencia de usuarios) que ordenan las hipótesis H1–H6 por validar: requisitos decisivos al inicio, documentos por etapa, citas en conflicto con sus páginas, carga del PDF, alternativa actual (Excel o asesor) y precio.
+**Conversaciones con usuarios potenciales:** 3 llamadas el martes 10/11/2026 (notas de Mirian en [docs/research/](docs/research/); permiso para tomar notas no registrado, por eso solo se publican perfiles con seudónimo):
+
+- **Proveedora A, dueña de una ferretería pequeña:** revisa primero si tiene los productos y si puede entregar a tiempo; una vez descubrió al leer las bases que exigían una experiencia que no podía acreditar. Le ayudaría una ficha con el plazo y la experiencia requerida, con la página exacta.
+- **Proveedor/a B, prepara ofertas para una distribuidora:** organiza los documentos en Excel; lo más tedioso es distinguir qué va con la oferta y qué se entrega si gana. Usaría la herramienta tras elegir un proceso, cargando las bases.
+- **Proveedora C, materiales eléctricos:** cuando dos secciones se contradicen, anota las páginas y consulta; un resumen sin fuente no le basta. Necesita ver los dos fragmentos, sus páginas y el aviso de «por verificar».
+
+Las llamadas apoyan las hipótesis H1–H5 del [guion de preparación](docs/research/conversaciones_simuladas.md) (una conversación por hipótesis: apoyo, no validación); nadie habló de precio ni de quién pagaría (H6).
 
 ## 4. Solución e insight
 
@@ -161,7 +167,7 @@ flowchart LR
 
 ## 7. Modelo de negocio
 
-**Todo lo de esta sección es una hipótesis por validar en las conversaciones con usuarios.**
+**Todo lo de esta sección es una hipótesis por validar con usuarios:** en las 3 llamadas del 10/11/2026 no se habló de precio ni de quién pagaría.
 
 - **Quién paga:** el pequeño proveedor (ferretería o distribuidor MYPE). Canal alternativo por explorar: gremios o cámaras de comercio que lo ofrezcan a sus asociados.
 - **Precio (hipótesis):** **S/ 39 al mes** por el radar con filtros guardados y **10 evaluaciones de bases**.
@@ -185,7 +191,7 @@ El código, las pruebas y este README los generó **Claude Code** (modelo Claude
 - **Investigación de fuentes:** encontró los bloqueos (HTTP 403) del portal OCDS y de la descarga de documentos, y ubicó la API pública que usa la app oficial del SEACE. Verificó el filtro por departamento y detectó 299 ítems con fechas incoherentes.
 - **Código:** `radar.py`, `evaluador.py`, `ocr_bases.py`, `app.py`, los scripts de `herramientas/` y 35 pruebas sin red (`pruebas/`).
 - **Validación:** recorridos en Edge sin ventana, capturas y contraste manual de cada cita con el PDF y con las páginas escaneadas.
-- **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso, validó los resultados, escribió el apartado «Founder», desplegó la demo pública y grabó el video. **Pendiente:** las 3 conversaciones reales con usuarios (las simuladas solo preparan las entrevistas).
+- **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso, validó los resultados, escribió el apartado «Founder», desplegó la demo pública, grabó el video y realizó las 3 llamadas con usuarios. **Pendiente:** validar el precio y quién paga (H6) con más proveedores.
 
 ---
 

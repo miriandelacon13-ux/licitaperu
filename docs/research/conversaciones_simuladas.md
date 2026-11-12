@@ -1,6 +1,6 @@
 # Tres conversaciones simuladas para preparar entrevistas
 
-> **Aviso:** estas conversaciones son **simuladas**. Las preparamos para ensayar las entrevistas y ordenar las hipótesis; las respuestas no vienen de proveedores reales. **No son evidencia de usuarios** ni cuentan como las 3 conversaciones de la consigna. Las entrevistas reales siguen **pendientes** en [conversacion_01.md](conversacion_01.md), [conversacion_02.md](conversacion_02.md) y [conversacion_03.md](conversacion_03.md).
+> **Aviso:** este es el **guion de preparación**, con respuestas **simuladas**, para ensayar las entrevistas y ordenar las hipótesis. **No es la evidencia de usuarios.** Las notas de las 3 llamadas del 10/11/2026 están en [conversacion_01.md](conversacion_01.md), [conversacion_02.md](conversacion_02.md) y [conversacion_03.md](conversacion_03.md).
 
 ## Conversación 1 — Dueña de una ferretería pequeña
 
@@ -44,4 +44,4 @@ Las tres primeras salen de las conversaciones simuladas; las demás aparecen en 
 | H5 | Hoy la alternativa es una lista en Excel o un asesor | Describe su Excel o cuánto pagó a un asesor | Usa otra herramienta o no organiza nada | «¿Qué usas hoy para organizar una postulación? ¿Cuánto te cuesta?» | — |
 | H6 | El pequeño proveedor pagaría S/ 39 al mes por el radar y 10 evaluaciones | Ya paga por algo parecido (asesor, plataforma) en ese rango | No pagaría o pagaría solo por proceso | «¿Cuánto pagaste la última vez por ayuda para postular?» | Modelo de negocio del README |
 
-Cuando se hagan las entrevistas reales, anotar en cada `conversacion_0N.md` qué hipótesis confirma o contradice cada respuesta.
+En las 3 llamadas del 10/11/2026 (ver cada `conversacion_0N.md`), H1, H2, H3, H4 y H5 recibieron el apoyo de una conversación cada una; H6 (precio y quién paga) no se abordó y sigue pendiente.
