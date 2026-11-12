@@ -206,7 +206,7 @@ caso_ejemplo/       caso publicado de la MML con la extracción guardada
 respaldo/           copia de respaldo de la API del SEACE (11/11/2026 23:47)
 herramientas/       scripts que generan el respaldo y el caso de ejemplo
 pruebas/            35 pruebas sin red y una muestra real de la API
-docs/               fuentes verificadas, capturas, guion, entrevistas (pendientes)
+docs/               fuentes verificadas, capturas, guion de la presentación, notas de las 3 llamadas
 .github/workflows/  pruebas y arranque en Linux (GitHub Actions)
 ```
 
