@@ -136,7 +136,8 @@ def aplicar_ocr(lectura, carpeta=None):
         archivo = carpeta / f"p{n:02d}.json"
         if archivo.exists():
             lineas = json.loads(archivo.read_text(encoding="utf-8"))["lineas"]
-            paginas[n - 1] = "\n".join(l["texto"] for l in lineas)
+            # se agrega al texto que ya tenía la página (p. ej. el encabezado con el número del proceso)
+            paginas[n - 1] = (paginas[n - 1].strip() + "\n" + "\n".join(l["texto"] for l in lineas)).strip()
             hechas.append(n)
     faltan = [n for n in lectura["sin_texto"] if n not in hechas]
     return lectura | {"paginas": paginas, "ocr": hechas, "sin_leer": faltan}
@@ -279,6 +280,29 @@ def extraer_requisitos(lectura, paginas=None):
                        "salida": estructurada})
     return {"requisitos": estructurada.get("requisitos", [])[:3], "modelo": modelo, "segundos": fila["segundos"],
             "costo_usd": salida.get("total_cost_usd"), "paginas_enviadas": enviadas}
+
+
+def ultima_extraccion(huella_pdf, bitacora=None):
+    """La última extracción exitosa de este PDF (con respaldos) guardada en la bitácora, o None.
+
+    Sirve para mostrar en una demo un resultado ya obtenido sin volver a pagar la llamada al modelo.
+    """
+    archivo = Path(bitacora) if bitacora else BITACORA
+    if not huella_pdf or not archivo.exists():
+        return None
+    for linea in reversed(archivo.read_text(encoding="utf-8").splitlines()):
+        try:
+            fila = json.loads(linea)
+        except ValueError:
+            continue
+        requisitos = (fila.get("salida") or {}).get("requisitos") or []
+        if (fila.get("ok") and fila.get("huella_pdf") == huella_pdf and requisitos
+                and all("respaldos" in r for r in requisitos)):
+            return {"requisitos": requisitos[:3], "modelo": fila.get("modelo"), "segundos": fila.get("segundos"),
+                    "costo_usd": fila.get("costo_usd"), "paginas_enviadas": fila.get("paginas_enviadas") or [],
+                    "sin_leer": fila.get("sin_leer") or [],
+                    "momento": datetime.fromisoformat(fila["momento"]).strftime("%d/%m/%Y %H:%M")}
+    return None
 
 
 # 6 · Verificación contra el texto

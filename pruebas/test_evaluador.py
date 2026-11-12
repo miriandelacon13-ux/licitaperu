@@ -180,3 +180,20 @@ def test_errores_del_modelo(monkeypatch, tmp_path):
         c, 0, json.dumps({"is_error": False, "result": "texto suelto"}), ""))
     with pytest.raises(evaluador.ErrorIA, match="salida estructurada"):
         evaluador.extraer_requisitos(PAGINAS)
+
+
+def test_ultima_extraccion_guardada(tmp_path):
+    bitacora = tmp_path / "ia.jsonl"
+    con = {"requisitos": [_req("frase larga de prueba para citar", 1)]}
+    sin = {"requisitos": [{k: v for k, v in _req("frase", 1).items() if k != "respaldos"}]}
+    filas = [
+        {"momento": "2026-11-11T22:50:43-05:00", "ok": True, "huella_pdf": "abc", "salida": sin},       # formato viejo
+        {"momento": "2026-11-11T23:07:02-05:00", "ok": True, "huella_pdf": "abc", "salida": con, "modelo": "m",
+         "segundos": 59.5, "costo_usd": 0.37, "paginas_enviadas": [22, 23], "sin_leer": [52]},
+        {"momento": "2026-11-11T23:10:00-05:00", "ok": False, "huella_pdf": "abc", "error": "timeout"},
+        {"momento": "2026-11-11T23:11:00-05:00", "ok": True, "huella_pdf": "otra", "salida": con}]
+    bitacora.write_text("\n".join(json.dumps(f) for f in filas) + "\nlínea rota\n", encoding="utf-8")
+    g = evaluador.ultima_extraccion("abc", bitacora)
+    assert g["momento"] == "11/11/2026 23:07" and g["paginas_enviadas"] == [22, 23] and g["costo_usd"] == 0.37
+    assert g["sin_leer"] == [52] and g["requisitos"][0]["respaldos"]
+    assert evaluador.ultima_extraccion("nada", bitacora) is None and evaluador.ultima_extraccion(None, bitacora) is None

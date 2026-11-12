@@ -109,7 +109,19 @@ def evaluar(p):
 
     seguir = coincide["corresponde"] or st.checkbox("Es el archivo correcto: evaluar de todos modos",
                                                     key=f"forzar_{clave}")
-    if st.button("Extraer 3 requisitos con IA", icon=":material/auto_awesome:", type="primary",
+    guardada = evaluador.ultima_extraccion(lectura["huella"])
+    b1, b2 = st.columns(2)
+    if guardada and b2.button("Usar la extracción guardada", icon=":material/history:", key=f"guardada_{clave}",
+                              disabled=not seguir,
+                              help=f"Corrida del {guardada['momento']}: {len(guardada['paginas_enviadas'])} páginas, "
+                                   f"{guardada['segundos']:.0f} s, US$ {guardada['costo_usd'] or 0:.2f}. No vuelve a "
+                                   "llamar al modelo; las citas se comprueban otra vez contra el PDF."):
+        st.session_state[f"req_{clave}"] = {
+            "requisitos": evaluador.verificar(guardada["requisitos"], lectura["paginas"], lectura["ocr"]),
+            "modelo": guardada["modelo"], "segundos": guardada["segundos"], "costo_usd": guardada["costo_usd"],
+            "enviadas": guardada["paginas_enviadas"], "total": len(lectura["paginas"]),
+            "sin_leer": guardada["sin_leer"], "guardada": guardada["momento"]}
+    if b1.button("Extraer 3 requisitos con IA", icon=":material/auto_awesome:", type="primary",
                  disabled=not (lectura["evaluable"] and seguir), key=f"extraer_{clave}"):
         with st.spinner("Leyendo las páginas relevantes y comprobando cada cita en el texto…"):
             try:
@@ -166,9 +178,12 @@ def checklist(res, clave):
         if lineas:
             st.markdown("\n".join(lineas))
     enviadas = res.get("enviadas") or []
-    st.caption(f"Extraído con {res['modelo']} (salida estructurada). Se enviaron {len(enviadas)} de {res.get('total')} "
-               f"páginas, con su número original ({evaluador.rangos(enviadas)}) · {res['segundos']:.0f} s · costo de "
-               f"referencia US$ {res.get('costo_usd') or 0:.2f}. Revisa siempre las bases completas antes de postular.")
+    origen = (f"Extracción guardada del {res['guardada']}, hecha antes con {res['modelo']} (salida estructurada); "
+              "ahora no se llamó al modelo y las citas se volvieron a comprobar contra el PDF. En esa corrida se "
+              if res.get("guardada") else f"Extraído con {res['modelo']} (salida estructurada). Se ")
+    st.caption(f"{origen}enviaron {len(enviadas)} de {res.get('total')} páginas, con su número original "
+               f"({evaluador.rangos(enviadas)}) · {res['segundos']:.0f} s · costo de referencia "
+               f"US$ {res.get('costo_usd') or 0:.2f}. Revisa siempre las bases completas antes de postular.")
     if res.get("sin_leer"):
         st.warning(f"Análisis incompleto: las páginas {evaluador.rangos(res['sin_leer'])} son imágenes que aún no "
                    "tenían OCR al extraer; lo que digan (por ejemplo, partes del requerimiento) no se analizó.",
