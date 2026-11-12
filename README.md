@@ -4,7 +4,7 @@
 
 Proyecto final de la Diplomatura de Especialización en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP), [issue #204](https://github.com/d2cml-ai/Data-Science-Python/issues/204).
 
-> **Estado (11/11/2026):** la demo completa (radar + evaluador) **corre en local**. La URL pública está pendiente: el evaluador usa por ahora la CLI de Claude Code de la computadora donde corre, y publicarlo requiere una clave de API con tope de gasto.
+> **Estado (12/11/2026):** la demo completa (radar + evaluador con IA en vivo) **corre en local**. La app está lista para Streamlit Community Cloud con el radar y el **caso de ejemplo** (extracción guardada, sin PDF ni clave de API); la IA en vivo en la nube queda pendiente porque requiere una clave de API con tope de gasto.
 
 ---
 
@@ -63,7 +63,7 @@ uv sync
 uv run streamlit run app.py --server.port 8503
 ```
 
-Abre http://localhost:8503. Pruebas (sin red, con una muestra real de la API): `uv run pytest` → 31 passed.
+Abre http://localhost:8503. Pruebas (sin red, con una muestra real de la API): `uv run pytest` → 35 passed. Las mismas pruebas y el arranque de la app corren en Linux con GitHub Actions ([.github/workflows/pruebas.yml](.github/workflows/pruebas.yml)).
 
 Las bases **no están en el repositorio**: el SEACE bloquea la descarga automática (HTTP 403), así que se descargan con el navegador desde el enlace oficial que muestra la ficha y se suben en la app. Para hacer OCR de las páginas escaneadas (lento: ~1.5–3 min por página en CPU):
 
@@ -81,6 +81,25 @@ El OCR se guarda en `datos/ocr/<huella del PDF>/` y la app lo usa al leer el PDF
 3. Subir las bases (PDF): la app confirma que son del proceso, la versión y la lectura parcial con OCR.
 4. **Extraer 3 requisitos con IA** (~60 s) o **Usar la extracción guardada** (resultado de una corrida anterior, sin volver a llamar al modelo; las citas se comprueban otra vez).
 5. Marcar **«Lo tengo»** y ver «Tu lista».
+
+**Caso de ejemplo (sin PDF, sin OCR en vivo y sin clave de API).** El botón **«Ver caso de ejemplo»** abre la licitación de la MML con la **extracción guardada** del 11/11/2026 ([caso_ejemplo/mml_lp-sm-16-2026.json](caso_ejemplo/mml_lp-sm-16-2026.json)): ficha del SEACE, los 3 requisitos con sus citas, páginas de origen y estados «Por verificar», y el checklist «Lo tengo». Solo publica citas breves de las bases (documento oficial público), sin el PDF ni su texto completo; se genera con [herramientas/preparar_caso_ejemplo.py](herramientas/preparar_caso_ejemplo.py), que vuelve a comprobar cada cita contra el PDF local.
+
+**Si el SEACE no responde** (por ejemplo, desde un servidor en la nube), el radar usa la última copia local o, si no la hay, la **copia de respaldo** publicada con la app ([respaldo/](respaldo/), consultada el 11/11/2026 23:47 con [herramientas/preparar_respaldo.py](herramientas/preparar_respaldo.py)), y lo avisa con la fecha de la copia. El filtro por departamento sigue funcionando con un mapa armado con el propio filtro del SEACE.
+
+### Despliegue en Streamlit Community Cloud
+
+En [share.streamlit.io](https://share.streamlit.io), **Create app → Deploy a public app from GitHub**:
+
+| Campo | Valor |
+|---|---|
+| Repository | `miriandelacon13-ux/licitaperu` |
+| Branch | `main` |
+| Main file path | `app.py` |
+| App URL | el subdominio que elijas (por ejemplo, `licitaperu`) |
+| Advanced settings → Python version | **3.13** (el proyecto pide Python ≥ 3.13) |
+| Advanced settings → Secrets | vacío: el radar y el caso de ejemplo no usan claves |
+
+Community Cloud instala con `uv.lock` (sin el grupo opcional `ocr`, así que no instala PaddleOCR). En la nube, la IA en vivo aparece como «no disponible» y el caso de ejemplo sigue funcionando.
 
 ### Capturas (app real, 11/11/2026)
 
@@ -162,7 +181,7 @@ flowchart LR
 El código, las pruebas y este README los generó **Claude Code** (modelo Claude Opus 5.5) a pedido de Mirian, que definió el problema y el caso, descargó las bases a mano y revisó cada paso.
 
 - **Investigación de fuentes:** encontró los bloqueos (HTTP 403) del portal OCDS y de la descarga de documentos, y ubicó la API pública que usa la app oficial del SEACE. Verificó el filtro por departamento y detectó 299 ítems con fechas incoherentes.
-- **Código:** `radar.py`, `evaluador.py`, `ocr_bases.py`, `app.py` y 31 pruebas sin red (`pruebas/`).
+- **Código:** `radar.py`, `evaluador.py`, `ocr_bases.py`, `app.py`, los scripts de `herramientas/` y 35 pruebas sin red (`pruebas/`).
 - **Validación:** recorridos en Edge sin ventana, capturas y contraste manual de cada cita con el PDF y con las páginas escaneadas.
 - **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso, validó los resultados y escribió el apartado «Founder». **Pendiente:** las 3 conversaciones con usuarios, el video de respaldo y la URL pública del demo.
 
@@ -175,8 +194,12 @@ app.py              interfaz (Streamlit)
 radar.py            procesos vigentes del SEACE, estado y búsqueda
 evaluador.py        lectura del PDF, OCR guardado, selección de páginas, extracción y verificación
 ocr_bases.py        OCR de páginas escaneadas (PaddleOCR, grupo opcional «ocr»)
-pruebas/            31 pruebas sin red y una muestra real de la API
+caso_ejemplo/       caso publicado de la MML con la extracción guardada
+respaldo/           copia de respaldo de la API del SEACE (11/11/2026 23:47)
+herramientas/       scripts que generan el respaldo y el caso de ejemplo
+pruebas/            35 pruebas sin red y una muestra real de la API
 docs/               fuentes verificadas, capturas, guion, entrevistas (pendientes)
+.github/workflows/  pruebas y arranque en Linux (GitHub Actions)
 ```
 
 Fuera de Git: las bases en PDF (`docs/bases/*.pdf`), la copia de la API y el OCR (`datos/`) y las bitácoras de llamadas (`registros/`).

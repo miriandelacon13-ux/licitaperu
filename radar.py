@@ -5,8 +5,11 @@ Fuente: la API pública que usa la app oficial «Oportunidades de negocio» del 
 fechas y el código del archivo de bases. Se filtra por departamento en el propio servidor (código INEI), como hace
 la app oficial; el campo «ubigeo» de cada fila es un código interno y no se usa para ubicar.
 
-Cada descarga se guarda en datos/cache/; si la API no responde, se usa la última copia y la app lo avisa.
+Cada descarga se guarda en datos/cache/. Si la API no responde, se usa la última copia local; si tampoco hay (por
+ejemplo, en un servidor en la nube), se usa la copia de respaldo publicada con la app (respaldo/, generada con
+herramientas/preparar_respaldo.py). La app avisa en ambos casos y muestra la fecha de la copia.
 """
+import gzip
 import json
 import re
 import unicodedata
@@ -17,6 +20,8 @@ import httpx
 
 RAIZ = Path(__file__).resolve().parent
 CACHE = RAIZ / "datos" / "cache"
+RESPALDO = RAIZ / "respaldo" / "oportunidades.json.gz"
+VIVO, COPIA, DE_RESPALDO = "vivo", "copia", "respaldo"
 API = "https://prod4.seace.gob.pe:8086/api/oportunidades/codObjeto/codDepartamento/sintesisProceso/codTipoProceso"
 URL_BASES = "https://prod1.seace.gob.pe/SeaceWeb-PRO/SdescargarArchivoAlfresco?fileCode={}"
 URL_BUSCADOR = "https://prod2.seace.gob.pe/seacebus-uiwd-pub/buscadorPublico/buscadorPublico.xhtml"
@@ -39,15 +44,27 @@ def ahora():
 
 # 1 · Descarga
 
+def _respaldo(departamento):
+    """Filas de la copia de respaldo publicada con la app, filtradas por departamento con su mapa de ubigeos."""
+    with gzip.open(RESPALDO, "rt", encoding="utf-8") as f:
+        guardado = json.load(f)
+    filas = guardado["filas"]
+    if departamento != "0":
+        mapa = guardado["departamento_por_ubigeo"]
+        filas = [f for f in filas if mapa.get(str(f.get("ubigeo"))) == departamento]
+    return filas, datetime.fromisoformat(guardado["consultado"])
+
+
 def descargar(departamento="0"):
     """Filas de la API para un departamento ("0" = todo el Perú).
 
-    Devuelve (filas, consultado, desde_copia): desde_copia es True si la API falló y se usó la última copia.
+    Devuelve (filas, consultado, origen): origen es VIVO si respondió la API, COPIA si se usó la última copia local
+    y DE_RESPALDO si se usó la copia publicada con la app. «consultado» es la fecha de esos datos.
     """
     url = f"{API}/0/{departamento}/0/0"
     copia = CACHE / f"oportunidades_{departamento}.json"
     try:
-        respuesta = httpx.get(url, timeout=60)
+        respuesta = httpx.get(url, timeout=httpx.Timeout(30, connect=10))
         respuesta.raise_for_status()
         filas = respuesta.json()
         if not isinstance(filas, list):
@@ -55,7 +72,10 @@ def descargar(departamento="0"):
     except (httpx.HTTPError, ValueError) as e:
         if copia.exists():
             guardado = json.loads(copia.read_text(encoding="utf-8"))
-            return guardado["filas"], datetime.fromisoformat(guardado["consultado"]), True
+            return guardado["filas"], datetime.fromisoformat(guardado["consultado"]), COPIA
+        if RESPALDO.exists():
+            filas, consultado = _respaldo(departamento)
+            return filas, consultado, DE_RESPALDO
         raise ErrorFuente(f"El SEACE no respondió ({type(e).__name__}) y no hay una copia guardada.") from None
     consultado = ahora()
     try:
@@ -64,7 +84,7 @@ def descargar(departamento="0"):
                                     ensure_ascii=False), encoding="utf-8")
     except OSError:
         pass
-    return filas, consultado, False
+    return filas, consultado, VIVO
 
 
 # 2 · De filas (ítems) a procesos

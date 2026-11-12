@@ -30,6 +30,7 @@ from pypdf import PdfReader
 
 RAIZ = Path(__file__).resolve().parent
 BITACORA = RAIZ / "registros" / "llamadas_ia.jsonl"
+CASO_EJEMPLO = RAIZ / "caso_ejemplo" / "mml_lp-sm-16-2026.json"
 CARPETA_OCR = RAIZ / "datos" / "ocr"
 CLI = os.environ.get("LICITAPERU_CLAUDE_CLI", "claude")
 MODELO = "claude-opus-5-5"
@@ -280,6 +281,21 @@ def extraer_requisitos(lectura, paginas=None):
                        "salida": estructurada})
     return {"requisitos": estructurada.get("requisitos", [])[:3], "modelo": modelo, "segundos": fila["segundos"],
             "costo_usd": salida.get("total_cost_usd"), "paginas_enviadas": enviadas}
+
+
+def estado_ia():
+    """¿Se puede extraer con IA en vivo aquí? {"disponible": bool, "detalle": str} para mostrarlo en pantalla."""
+    if shutil.which(CLI):
+        return {"disponible": True, "detalle": f"IA en vivo disponible en esta computadora (CLI de Claude Code, "
+                                               f"{MODELO})."}
+    return {"disponible": False, "detalle": "IA en vivo no disponible en este servidor: requiere configurar una clave "
+                                            "de API (pendiente). El caso de ejemplo funciona sin ella."}
+
+
+def cargar_caso_ejemplo(archivo=None):
+    """El caso publicado de la MML (herramientas/preparar_caso_ejemplo.py): ficha, datos del PDF y extracción
+    guardada con citas ya comprobadas. No necesita el PDF, ni OCR, ni clave de API."""
+    return json.loads(Path(archivo or CASO_EJEMPLO).read_text(encoding="utf-8"))
 
 
 def ultima_extraccion(huella_pdf, bitacora=None):

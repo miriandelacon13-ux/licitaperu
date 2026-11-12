@@ -1,10 +1,12 @@
-"""LicitaPerú · radar de oportunidades y evaluador de requisitos (demo local).
+"""LicitaPerú · radar de oportunidades y evaluador de requisitos.
 
-Iniciar desde la raíz del proyecto:  uv run streamlit run app.py --server.port 8503
+Local:  uv run streamlit run app.py --server.port 8503     Streamlit Community Cloud: archivo de inicio app.py
 
-Radar: procesos vigentes del SEACE (radar.py). Evaluador: el proveedor sube las bases en PDF; se comprueba que sean
-del proceso y que se puedan leer (con OCR guardado para las páginas escaneadas, ocr_bases.py), un LLM con salida
-estructurada extrae 3 requisitos y cada cita se contrasta con el texto (evaluador.py).
+Radar: procesos vigentes del SEACE (radar.py), con copia de respaldo si la API no responde. Evaluador: el proveedor
+sube las bases en PDF; se comprueba que sean del proceso y que se puedan leer (con OCR guardado para las páginas
+escaneadas, ocr_bases.py), un LLM con salida estructurada extrae 3 requisitos y cada cita se contrasta con el texto
+(evaluador.py). «Ver caso de ejemplo» abre el caso de la MML con una extracción guardada: no necesita el PDF, ni OCR,
+ni clave de API.
 """
 import re
 
@@ -28,8 +30,8 @@ def md(texto):
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def cargar(departamento):
-    filas, consultado, desde_copia = radar.descargar(departamento)
-    return radar.procesos(filas), consultado, desde_copia
+    filas, consultado, origen = radar.descargar(departamento)
+    return radar.procesos(filas), consultado, origen
 
 
 @st.cache_data(show_spinner=False, max_entries=5)
@@ -37,7 +39,7 @@ def leer(datos):
     return evaluador.leer_pdf(datos)
 
 
-def ficha(p):
+def ficha(p, caso=None):
     registro, detalle = radar.estado(p)
     propuestas, detalle_propuestas = radar.estado_propuestas(p)
     with st.container(border=True):
@@ -66,7 +68,25 @@ def ficha(p):
                        f"«{md(p['codigo'])}» para abrir la ficha")
         enlaces.append(f"- [Oportunidades de negocio del SEACE]({radar.URL_APP_OFICIAL})")
         st.markdown("**Enlaces oficiales**\n\n" + "\n".join(enlaces))
-        evaluar(p)
+        if caso:
+            extraccion_guardada(caso)
+        else:
+            evaluar(p)
+
+
+def extraccion_guardada(caso):
+    """El análisis publicado del caso de ejemplo: sin PDF, sin OCR en vivo y sin llamar al modelo."""
+    st.markdown("#### ¿Qué te piden para postular?")
+    st.badge("Extracción guardada", icon=":material/history:", color="gray")
+    b, e = caso["bases"], caso["extraccion"]
+    st.caption(f"Bases revisadas en local: {md(b['documento'])} ({b['paginas']} páginas; el número del proceso aparece "
+               f"en {b['menciona_el_numero_en']}). Metadatos del PDF: {b['creado']}; "
+               f"{'bases integradas' if b['integradas'] else 'no son bases integradas'}. Páginas escaneadas leídas con "
+               f"OCR (PaddleOCR): {b['con_ocr']}. El PDF no se publica: descárgalo desde el enlace oficial.")
+    res = {"requisitos": caso["requisitos"], "modelo": e["modelo"], "segundos": e["segundos"],
+           "costo_usd": e["costo_usd"], "enviadas": e["paginas_enviadas"], "total": e["total_paginas"],
+           "sin_leer": e["sin_leer_al_extraer"], "guardada": e["momento"], "comprobado": caso["comprobado"]}
+    checklist(res, "ejemplo")
 
 
 def evaluar(p):
@@ -121,8 +141,10 @@ def evaluar(p):
             "modelo": guardada["modelo"], "segundos": guardada["segundos"], "costo_usd": guardada["costo_usd"],
             "enviadas": guardada["paginas_enviadas"], "total": len(lectura["paginas"]),
             "sin_leer": guardada["sin_leer"], "guardada": guardada["momento"]}
+    ia = evaluador.estado_ia()
     if b1.button("Extraer 3 requisitos con IA", icon=":material/auto_awesome:", type="primary",
-                 disabled=not (lectura["evaluable"] and seguir), key=f"extraer_{clave}"):
+                 disabled=not (lectura["evaluable"] and seguir and ia["disponible"]), key=f"extraer_{clave}",
+                 help=None if ia["disponible"] else ia["detalle"]):
         with st.spinner("Leyendo las páginas relevantes y comprobando cada cita en el texto…"):
             try:
                 paginas = evaluador.seleccionar_paginas(lectura)
@@ -134,6 +156,8 @@ def evaluar(p):
                     "total": len(lectura["paginas"]), "sin_leer": list(lectura["sin_leer"])}
             except evaluador.ErrorIA as e:
                 st.session_state[f"req_{clave}"] = {"error": str(e)}
+    if not ia["disponible"]:
+        st.caption(ia["detalle"])
     res = st.session_state.get(f"req_{clave}")
     if not res:
         return
@@ -178,9 +202,15 @@ def checklist(res, clave):
         if lineas:
             st.markdown("\n".join(lineas))
     enviadas = res.get("enviadas") or []
-    origen = (f"Extracción guardada del {res['guardada']}, hecha antes con {res['modelo']} (salida estructurada); "
-              "ahora no se llamó al modelo y las citas se volvieron a comprobar contra el PDF. En esa corrida se "
-              if res.get("guardada") else f"Extraído con {res['modelo']} (salida estructurada). Se ")
+    if res.get("comprobado"):
+        origen = (f"Extracción guardada del {res['guardada']}, hecha antes con {res['modelo']} (salida estructurada); "
+                  f"no se llamó al modelo. Las citas se comprobaron contra el PDF en local el {res['comprobado']}. "
+                  "En esa corrida se ")
+    elif res.get("guardada"):
+        origen = (f"Extracción guardada del {res['guardada']}, hecha antes con {res['modelo']} (salida estructurada); "
+                  "ahora no se llamó al modelo y las citas se volvieron a comprobar contra el PDF. En esa corrida se ")
+    else:
+        origen = f"Extraído con {res['modelo']} (salida estructurada). Se "
     st.caption(f"{origen}enviaron {len(enviadas)} de {res.get('total')} páginas, con su número original "
                f"({evaluador.rangos(enviadas)}) · {res['segundos']:.0f} s · costo de referencia "
                f"US$ {res.get('costo_usd') or 0:.2f}. Revisa siempre las bases completas antes de postular.")
@@ -194,6 +224,29 @@ st.set_page_config(page_title="LicitaPerú", page_icon="🔎", layout="centered"
 st.title("LicitaPerú")
 st.caption("Compras públicas para pequeños proveedores: encuentra oportunidades y mira qué te falta para postular.")
 
+ia = evaluador.estado_ia()
+st.session_state.setdefault("ejemplo", False)
+e1, e2 = st.columns([2, 3], vertical_alignment="center")
+if st.session_state.ejemplo:
+    if e1.button("Volver al radar", icon=":material/arrow_back:"):
+        st.session_state.ejemplo = False
+        st.rerun()
+elif e1.button("Ver caso de ejemplo", icon=":material/menu_book:"):
+    st.session_state.ejemplo = True
+    st.rerun()
+e2.caption(("✅ " if ia["disponible"] else "⚠️ ") + ia["detalle"])
+
+if st.session_state.ejemplo:
+    caso = evaluador.cargar_caso_ejemplo()
+    st.info("**Caso de ejemplo:** licitación real de la Municipalidad Metropolitana de Lima con una **extracción "
+            "guardada**. No necesitas subir el PDF, ni OCR, ni una clave de API: las citas ya se comprobaron contra "
+            "las bases. Los datos del proceso son los del SEACE; el estado se calcula con la fecha de hoy.",
+            icon=":material/menu_book:")
+    ficha(radar.procesos(caso["filas_seace"])[0], caso=caso)
+    st.caption("LicitaPerú es un proyecto independiente: usa datos públicos del SEACE (OECE) y no representa al "
+               "Estado.")
+    st.stop()
+
 c1, c2 = st.columns([3, 2])
 palabras = c1.text_input("Palabras clave", value="ferretería",
                          help="Busca en el código, la entidad, la síntesis y los ítems, sin importar tildes.")
@@ -205,20 +258,27 @@ solo_abiertos = c4.toggle("Solo con registro abierto", value=True)
 codigo_dep = next((c for c, n in radar.DEPARTAMENTOS.items() if n == departamento), "0")
 try:
     with st.spinner("Consultando el SEACE…"):
-        lista, consultado, desde_copia = cargar(codigo_dep)
+        lista, consultado, origen = cargar(codigo_dep)
 except radar.ErrorFuente as e:
-    st.error(f"No se pudo consultar el radar. {e}", icon=":material/cloud_off:")
+    st.error(f"No se pudo consultar el radar. {e} Puedes abrir el caso de ejemplo.", icon=":material/cloud_off:")
     if st.button("Reintentar"):
         cargar.clear()
         st.rerun()
     st.stop()
 
-fuente = (f"Fuente: [SEACE · Oportunidades de negocio]({radar.URL_APP_OFICIAL}) (API pública) · "
-          f"consultado el {radar.texto_fecha(consultado)} · {len(lista):,} procesos vigentes en "
-          f"{'todo el Perú' if codigo_dep == '0' else departamento}")
-if desde_copia:
-    st.warning(f"El SEACE no respondió: se muestra la copia guardada del {radar.texto_fecha(consultado)}.",
-               icon=":material/history:")
+lugar = "todo el Perú" if codigo_dep == "0" else departamento
+if origen == radar.VIVO:
+    fuente = (f"Fuente: [SEACE · Oportunidades de negocio]({radar.URL_APP_OFICIAL}) (API pública) · consultado el "
+              f"{radar.texto_fecha(consultado)} · {len(lista):,} procesos vigentes en {lugar}")
+else:
+    tipo = "copia local" if origen == radar.COPIA else "copia de respaldo publicada con la app"
+    st.warning(f"El SEACE no respondió desde este servidor. Se muestran **datos de respaldo** ({tipo}) consultados "
+               f"el **{radar.texto_fecha(consultado)}**: pueden estar desactualizados.", icon=":material/history:")
+    if st.button("Reintentar con el SEACE"):
+        cargar.clear()
+        st.rerun()
+    fuente = (f"Fuente: [SEACE · Oportunidades de negocio]({radar.URL_APP_OFICIAL}) · {tipo} del "
+              f"{radar.texto_fecha(consultado)} · {len(lista):,} procesos en {lugar}")
 st.caption(fuente)
 
 resultados = radar.filtrar(lista, palabras, None if objeto == "Todos" else objeto, solo_abiertos)

@@ -85,6 +85,7 @@ def test_filtrar_solo_abiertos_y_por_objeto():
 
 def test_si_el_seace_falla_se_usa_la_copia(tmp_path, monkeypatch):
     monkeypatch.setattr(radar, "CACHE", tmp_path)
+    monkeypatch.setattr(radar, "RESPALDO", tmp_path / "no-hay-respaldo.json.gz")
 
     class Respuesta:
         def raise_for_status(self):
@@ -94,15 +95,33 @@ def test_si_el_seace_falla_se_usa_la_copia(tmp_path, monkeypatch):
             return filas_muestra()
 
     monkeypatch.setattr(radar.httpx, "get", lambda url, timeout: Respuesta())
-    filas, _, desde_copia = radar.descargar("15")
-    assert len(filas) == 5 and not desde_copia
+    filas, _, origen = radar.descargar("15")
+    assert len(filas) == 5 and origen == radar.VIVO
     assert json.loads((tmp_path / "oportunidades_15.json").read_text(encoding="utf-8"))["url"].endswith("/0/15/0/0")
 
     def falla(url, timeout):
         raise httpx.ConnectError("sin red")
 
     monkeypatch.setattr(radar.httpx, "get", falla)
-    filas, _, desde_copia = radar.descargar("15")
-    assert len(filas) == 5 and desde_copia
+    filas, _, origen = radar.descargar("15")
+    assert len(filas) == 5 and origen == radar.COPIA
     with pytest.raises(radar.ErrorFuente):
-        radar.descargar("04")   # sin copia guardada
+        radar.descargar("04")   # sin copia local ni respaldo
+
+
+def test_sin_red_ni_copia_se_usa_el_respaldo_publicado(tmp_path, monkeypatch):
+    # El respaldo real del repositorio (herramientas/preparar_respaldo.py), como en un servidor recién desplegado.
+    monkeypatch.setattr(radar, "CACHE", tmp_path)
+
+    def falla(url, timeout):
+        raise httpx.ConnectTimeout("la API no responde desde la nube")
+
+    monkeypatch.setattr(radar.httpx, "get", falla)
+    todo, consultado, origen = radar.descargar("0")
+    assert origen == radar.DE_RESPALDO and consultado.strftime("%d/%m/%Y %H:%M") == "11/11/2026 23:47"
+    lima, _, _ = radar.descargar("15")
+    assert 0 < len(lima) < len(todo)
+    codigos = {p["codigo"] for p in radar.procesos(lima)}
+    assert "LP-SM-16-2026-MML-OGA-OL-1" in codigos and "LP-ABR-10-2025-SEAL-4" not in codigos   # SEAL es de Arequipa
+    arequipa, _, _ = radar.descargar("04")
+    assert "LP-ABR-10-2025-SEAL-4" in {p["codigo"] for p in radar.procesos(arequipa)}

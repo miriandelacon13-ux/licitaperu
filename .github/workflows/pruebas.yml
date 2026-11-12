@@ -1,0 +1,30 @@
+# Clon limpio en Linux (como Streamlit Community Cloud): instala con uv.lock, corre las pruebas, arranca app.py
+# y comprueba si la API del SEACE responde desde la nube (informativo: si no, la app usa el respaldo).
+name: Pruebas en Linux
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Python 3.13
+        run: uv python install 3.13
+      - name: Dependencias (sin el grupo ocr)
+        run: uv sync --frozen
+      - name: Pruebas
+        run: uv run pytest -q
+      - name: Arranque de app.py
+        run: |
+          uv run streamlit run app.py --server.headless true --server.port 8501 > streamlit.log 2>&1 &
+          for i in $(seq 1 45); do curl -sf http://localhost:8501/_stcore/health && break; sleep 2; done
+          curl -sf http://localhost:8501/_stcore/health
+      - name: ¿Responde el SEACE desde la nube? (informativo)
+        run: |
+          curl -s -o /dev/null --max-time 30 -w "HTTP %{http_code}\n" \
+            "https://prod4.seace.gob.pe:8086/api/oportunidades/codObjeto/codDepartamento/sintesisProceso/codTipoProceso/0/15/0/0" \
+            || echo "sin respuesta: la app usará la copia de respaldo"

@@ -1,0 +1,321 @@
+{
+ "titulo": "Licitación de materiales ferreteros de la Municipalidad Metropolitana de Lima",
+ "codigo": "LP-SM-16-2026-MML-OGA-OL-1",
+ "filas_seace": [
+  {
+   "idProcedimiento": 1262798,
+   "detEntidad": "MUNICIPALIDAD METROPOLITANA DE LIMA",
+   "codTipoProceso": null,
+   "detTipoProceso": "Licitación Pública",
+   "codModalidadSeleccion": null,
+   "detModalidadSeleccion": "Sin Modalidad",
+   "numProceso": "16",
+   "anhoProceso": "2026",
+   "siglasProceso": "MML-OGA-OL",
+   "nomenclatura": "LP-SM-16-2026-MML-OGA-OL-1",
+   "codObjeto": "62",
+   "detObjeto": "Bien",
+   "valorReferencial": "---",
+   "monedaProceso": "Soles",
+   "fechaConvocatoria": "03/11/2026 13:19:00",
+   "fechaInicio": "04/11/2026 00:01:00",
+   "fechaFin": "09/12/2026 23:59:00",
+   "fechaPresentacionPropuestas": "10/12/2026 00:01:00",
+   "documentoBase": "db513705-7e82-4501-9564-6c0c34cc7893",
+   "ubigeo": 1470,
+   "idItem": null,
+   "nroItem": "1",
+   "detItem": "ADQUISICIÓN DE MATERIALES FERRETEROS, REPUESTOS Y ACCESORIOS PARA LA EJECUCIÓN DEL PIP ¿MEJORAMIENTO DEL SERVICIO DE MOVILIDAD URBANA EN LAS VÍAS LOCALES DEL EJE ESTRUCTURANTE ANCASH Y JUNÍN EN EL CENTRO HISTÓRICO DE LIMA DISTRITO DE LIMA DE LA PROVI",
+   "codCubso": " ",
+   "detCubso": " ",
+   "cantItem": "1",
+   "codUnidadMedida": null,
+   "detUnidadMedida": " ",
+   "codMonedaItem": null,
+   "detMonedaItem": "Soles",
+   "tipoCambio": "1.00",
+   "valorReferencialItem": "---",
+   "tipoItem": "PAQUETE",
+   "cEstadoItem": null,
+   "sintesisProceso": "ADQUISICIÓN DE MATERIALES FERRETEROS, REPUESTOS Y ACCESORIOS PARA LA EJECUCIÓN DEL PIP \"MEJORAMIENTO DEL SERVICIO DE MOVILIDAD URBANA EN LAS VÍAS LOCALES DEL EJE ESTRUCTURANTE ANCASH Y JUNÍN EN EL CENTRO HISTÓRICO DE LIMA DISTRITO DE LIMA DE LA PROVINCIA DE LIMA DEL DEPARTAMENTO DE LIMA CON CUI 2629",
+   "fecInicioParticipantes": "04/11/2026 00:01:00",
+   "fecFinParticipantes": "09/12/2026 23:59:00",
+   "versionSeace": "3",
+   "reiniciadoDesde": null,
+   "urlProceso": null,
+   "urlBases": null,
+   "estadoItem": "7"
+  }
+ ],
+ "bases": {
+  "documento": "N° 016-2026-MML-OGA-OL",
+  "paginas": 96,
+  "menciona_el_numero_en": 94,
+  "huella": "6ec5dd6be408336d",
+  "creado": "03/11/2026 13:12",
+  "integradas": false,
+  "paginas_imagen": "1, 28–52, 66",
+  "con_ocr": "1, 28–52, 66",
+  "sin_leer": "ninguna"
+ },
+ "extraccion": {
+  "momento": "11/11/2026 23:07",
+  "modelo": "claude-opus-5-5",
+  "segundos": 59.52,
+  "costo_usd": 0.3676248,
+  "paginas_enviadas": [
+   7,
+   11,
+   13,
+   22,
+   23,
+   24,
+   25,
+   30,
+   46,
+   50,
+   51,
+   53,
+   57,
+   59,
+   60,
+   85
+  ],
+  "sin_leer_al_extraer": [
+   33,
+   34,
+   35,
+   36,
+   37,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   47,
+   52,
+   66
+  ],
+  "total_paginas": 96
+ },
+ "comprobado": "12/11/2026 04:51",
+ "requisitos": [
+  {
+   "requisito": "Experiencia del postor en la especialidad",
+   "que_se_pide": "Acreditar ventas acumuladas de S/ 1,500,000.00 en bienes iguales o similares (materiales ferreteros, repuestos y accesorios), realizadas en los 10 años anteriores a la presentación de ofertas. Se acredita con contratos u órdenes de compra con su conformidad, o con comprobantes de pago cancelados, hasta un máximo de 20 contrataciones. Si las ventas fueron a privados, es obligatorio presentar comprobantes de pago cancelados. Debe llenarse el Anexo Nº 11. Si se postula en consorcio, el integrante que acredita la mayor experiencia debe tener al menos un 80 % de participación.",
+   "momento": "Con la oferta",
+   "pagina": 50,
+   "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS – A. EXPERIENCIA DEL POSTOR EN LA ESPECIALIDAD",
+   "fragmento": "El postor debe acreditar un monto facturado acumulado equivalente a S/ 1,500,000.00",
+   "ambiguo": true,
+   "nota": "El numeral 2.2.1.2 remite al numeral 3.5 del Capítulo III, que no está entre las páginas entregadas; el requisito se tomó del punto 7 del requerimiento (págs. 50-51, texto obtenido por OCR). La página 52 es una imagen ilegible y podría tener otros requisitos de calificación.",
+   "estado": "Por verificar",
+   "verificacion": "todas las citas aparecen literales, pero el requisito es ambiguo: El numeral 2.2.1.2 remite al numeral 3.5 del Capítulo III, que no está entre las páginas entregadas; el requisito se tomó del punto 7 del requerimiento (págs. 50-51, texto obtenido por OCR). La página 52 es una imagen ilegible y podría tener otros requisitos de calificación.",
+   "origen": "texto por OCR",
+   "respaldos": [
+    {
+     "dato": "Monto: S/ 1,500,000.00",
+     "pagina": 50,
+     "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS",
+     "fragmento": "El postor debe acreditar un monto facturado acumulado equivalente a S/ 1,500,000.00",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 50 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Periodo: 10 años anteriores",
+     "pagina": 50,
+     "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS",
+     "fragmento": "durante los diez (10) años anteriores a la fecha de la",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 50 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Bienes similares",
+     "pagina": 50,
+     "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS",
+     "fragmento": "Se consideran bienes similares a los siguientes: Materiales ferreteros, repuestos y",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 50 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Máximo 20 contrataciones",
+     "pagina": 50,
+     "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS",
+     "fragmento": "máximo de veinte contrataciones",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 50 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Ventas a privados: comprobantes cancelados obligatorios",
+     "pagina": 51,
+     "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS",
+     "fragmento": "presentar de forma obligatoria lo indicado en el numeral (ii) del presente párrafo",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 51 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Anexo Nº 11",
+     "pagina": 51,
+     "seccion": "7.1.REQUISITOS DE CALIFICACIÓN OBLIGATORIOS",
+     "fragmento": "los postores deben llenar y presentar el Anexo Nº 11",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 51 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Consorcio: 80 % para quien acredita la mayor experiencia",
+     "pagina": 51,
+     "seccion": "7.2.REQUISITOS DE CALIFICACIÓN ADICIONALES – C. PARTICIPACIÓN EN CONSORCIO",
+     "fragmento": "del consorcio que acredite mayor experiencia, es de 80%.",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 51 (texto por OCR)",
+     "origen": "texto por OCR"
+    },
+    {
+     "dato": "Etapa: con la oferta",
+     "pagina": 23,
+     "seccion": "2.2.1.2 Documentos para acreditar los requisitos de calificación",
+     "fragmento": "Incorporar en la oferta los documentos que acreditan los “Requisitos de Calificación”",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 23 (texto del PDF)",
+     "origen": "texto del PDF"
+    }
+   ]
+  },
+  {
+   "requisito": "Documentos para la admisión de la oferta",
+   "que_se_pide": "Anexo Nº 1 (declaración jurada de datos del postor); Anexo N° 2 (pacto de integridad); documento de representación (vigencia de poder o DNI); Anexo Nº 3 (declaración jurada de veracidad y de no estar impedido para contratar); Anexo Nº 4 (promesa de consorcio, si corresponde); Anexo N° 6 (oferta económica). Además, el requerimiento pide fichas técnicas, catálogos u otros documentos que acrediten las características técnicas de los productos. Si falta alguno, la oferta no se admite.",
+   "momento": "Con la oferta",
+   "pagina": 22,
+   "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+   "fragmento": "De no cumplir con lo requerido, la oferta se considera no admitida.",
+   "ambiguo": true,
+   "nota": "La página 46 pide fichas técnicas o catálogos para la admisión, pero esa exigencia no aparece en la lista del numeral 2.2.1.1, y ese numeral prohíbe a los evaluadores añadir documentos de admisión. Lo prudente es presentarlas. Las especificaciones de los bienes están en páginas que son imágenes ilegibles (33–37, 40–45, 47).",
+   "estado": "Por verificar",
+   "verificacion": "todas las citas aparecen literales, pero el requisito es ambiguo: La página 46 pide fichas técnicas o catálogos para la admisión, pero esa exigencia no aparece en la lista del numeral 2.2.1.1, y ese numeral prohíbe a los evaluadores añadir documentos de admisión. Lo prudente es presentarlas. Las especificaciones de los bienes están en páginas que son imágenes ilegibles (33–37, 40–45, 47).",
+   "origen": "texto del PDF",
+   "respaldos": [
+    {
+     "dato": "Anexo Nº 1",
+     "pagina": 22,
+     "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+     "fragmento": "a) Declaración jurada de datos del postor. (Anexo Nº 1)",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 22 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Anexo N° 2",
+     "pagina": 22,
+     "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+     "fragmento": "b) Pacto de integridad (Anexo N° 2)",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 22 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Documento de representación",
+     "pagina": 22,
+     "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+     "fragmento": "c) Documento que acredite la representación de quien suscribe las ofertas.",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 22 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Anexo Nº 3",
+     "pagina": 23,
+     "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+     "fragmento": "no se encuentra impedido para contratar con el Estado, de acuerdo con el artículo",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 23 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Anexo Nº 4 (consorcio)",
+     "pagina": 23,
+     "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+     "fragmento": "e) Promesa de consorcio con firmas digitales, o en su defecto, firmas legalizadas, de",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 23 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Anexo N° 6",
+     "pagina": 23,
+     "seccion": "2.2.1.1 Documentos para la admisión de la oferta",
+     "fragmento": "g) Oferta económica (Anexo N° 6).",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 23 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Fichas técnicas o catálogos",
+     "pagina": 46,
+     "seccion": "Requerimiento – características técnicas",
+     "fragmento": "fichas técnicas, catálogos u otra documentación que permita acreditar la característica",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 46 (texto por OCR)",
+     "origen": "texto por OCR"
+    }
+   ]
+  },
+  {
+   "requisito": "Garantía de fiel cumplimiento",
+   "que_se_pide": "El ganador debe presentar una garantía equivalente al 10 % del monto del contrato (carta fianza, seguro, retención de pago o fideicomiso con el Anexo N° 8). Las micro y pequeñas empresas pueden optar por la retención de pago (Anexo N° 7), sea cual sea el monto. No se exige garantía en contratos de bienes de hasta 50 UIT.",
+   "momento": "Para perfeccionar el contrato",
+   "pagina": 24,
+   "seccion": "2.3 REQUISITOS PARA PERFECCIONAR EL CONTRATO",
+   "fragmento": "a) Garantía de fiel cumplimiento del contrato , autorización de retención (Anexo N° 7)",
+   "ambiguo": true,
+   "nota": "Las páginas entregadas no indican la cuantía del procedimiento, así que no se puede saber si aplica la excepción de 50 UIT. La proforma del contrato (pág. 59) menciona otro objeto (tarjetas electrónicas para SITRAMUN), lo que parece un error de las bases.",
+   "estado": "Por verificar",
+   "verificacion": "todas las citas aparecen literales, pero el requisito es ambiguo: Las páginas entregadas no indican la cuantía del procedimiento, así que no se puede saber si aplica la excepción de 50 UIT. La proforma del contrato (pág. 59) menciona otro objeto (tarjetas electrónicas para SITRAMUN), lo que parece un error de las bases.",
+   "origen": "texto del PDF",
+   "respaldos": [
+    {
+     "dato": "10 % del monto del contrato",
+     "pagina": 13,
+     "seccion": "4.1 REQUISITOS PARA EL PERFECCIONAMIENTO DEL CONTRATO",
+     "fragmento": "equivalente al 10% del monto del contrato",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 13 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Retención de pago para MYPE",
+     "pagina": 13,
+     "seccion": "4.1 REQUISITOS PARA EL PERFECCIONAMIENTO DEL CONTRATO",
+     "fragmento": "pequeñas empresas estas pueden otorgar como",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 13 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Excepción: hasta 50 UIT",
+     "pagina": 13,
+     "seccion": "4.1 REQUISITOS PARA EL PERFECCIONAMIENTO DEL CONTRATO",
+     "fragmento": "50 UIT, no corresponde presentar garantía de fiel",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 13 (texto del PDF)",
+     "origen": "texto del PDF"
+    },
+    {
+     "dato": "Etapa: para perfeccionar el contrato",
+     "pagina": 24,
+     "seccion": "2.3 REQUISITOS PARA PERFECCIONAR EL CONTRATO",
+     "fragmento": "El postor ganador de la buena pro debe presentar los siguientes documentos para perfeccionar",
+     "estado": "Verificado en el texto",
+     "verificacion": "aparece literal en la página 24 (texto del PDF)",
+     "origen": "texto del PDF"
+    }
+   ]
+  }
+ ]
+}

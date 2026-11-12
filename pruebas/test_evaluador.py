@@ -197,3 +197,24 @@ def test_ultima_extraccion_guardada(tmp_path):
     assert g["momento"] == "11/11/2026 23:07" and g["paginas_enviadas"] == [22, 23] and g["costo_usd"] == 0.37
     assert g["sin_leer"] == [52] and g["requisitos"][0]["respaldos"]
     assert evaluador.ultima_extraccion("nada", bitacora) is None and evaluador.ultima_extraccion(None, bitacora) is None
+
+
+def test_caso_de_ejemplo_publicable():
+    import re
+    caso = evaluador.cargar_caso_ejemplo()
+    texto = evaluador.CASO_EJEMPLO.read_text(encoding="utf-8")
+    assert not re.findall(r"[\w.+-]+@[\w-]+\.[\w.]+", texto)          # sin correos
+    assert not re.search(r"BOGDANOVICH|Firmado digitalmente", texto)  # sin firmas digitales del PDF
+    assert caso["codigo"] == "LP-SM-16-2026-MML-OGA-OL-1" and caso["filas_seace"]
+    assert caso["extraccion"]["momento"] == "11/11/2026 23:07" and len(caso["extraccion"]["paginas_enviadas"]) == 16
+    assert [r["estado"] for r in caso["requisitos"]] == [evaluador.POR_VERIFICAR] * 3
+    for r in caso["requisitos"]:
+        assert r["respaldos"] and all(isinstance(c["pagina"], int) and c["fragmento"] for c in r["respaldos"])
+    paginas = {c["pagina"] for r in caso["requisitos"] for c in r["respaldos"]}
+    assert {22, 23, 46, 50, 51, 13, 24} <= paginas
+
+
+def test_estado_de_la_ia(monkeypatch):
+    monkeypatch.setattr(evaluador, "CLI", "no-existe-claude-licitaperu")
+    ia = evaluador.estado_ia()
+    assert not ia["disponible"] and "clave de API" in ia["detalle"] and "caso de ejemplo" in ia["detalle"]

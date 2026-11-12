@@ -9,6 +9,7 @@ from streamlit.testing.v1 import AppTest
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import evaluador  # noqa: E402
 import radar  # noqa: E402
 from utiles import filas_muestra, momento  # noqa: E402
 
@@ -22,7 +23,7 @@ def fuente_simulada(monkeypatch):
 
     def descargar(departamento="0"):
         pedidos.append(departamento)
-        return filas_muestra(), momento("11/11/2026 22:12:04"), False
+        return filas_muestra(), momento("11/11/2026 22:12:04"), radar.VIVO
 
     monkeypatch.setattr(radar, "descargar", descargar)
     monkeypatch.setattr(radar, "ahora", lambda: momento("11/11/2026 22:30:00"))
@@ -79,7 +80,49 @@ def test_error_de_la_fuente_y_copia(monkeypatch):
     assert "No se pudo consultar el radar" in at.error[0].value
     assert any(b.label == "Reintentar" for b in at.button)
 
-    st.cache_data.clear()
-    monkeypatch.setattr(radar, "descargar", lambda d="0": (filas_muestra(), momento("10/11/2026 08:00:00"), True))
+    for origen, tipo in [(radar.COPIA, "copia local"), (radar.DE_RESPALDO, "copia de respaldo publicada con la app")]:
+        st.cache_data.clear()
+        monkeypatch.setattr(radar, "descargar", lambda d="0", o=origen: (filas_muestra(),
+                                                                         momento("11/11/2026 23:47:00"), o))
+        at = AppTest.from_file(APP, default_timeout=60).run()
+        aviso = at.warning[0].value
+        assert "**datos de respaldo**" in aviso and f"({tipo})" in aviso and "**11/11/2026 23:47**" in aviso
+        assert f"{tipo} del 11/11/2026 23:47" in _textos(at)
+
+
+def test_caso_de_ejemplo_sin_pdf_ni_api_ni_clave(monkeypatch):
+    # Como en la nube: el SEACE no responde, no hay CLI de Claude ni clave, no hay PDF ni OCR.
+    def falla(departamento="0"):
+        raise radar.ErrorFuente("El SEACE no respondió.")
+
+    monkeypatch.setattr(radar, "descargar", falla)
+    monkeypatch.setattr(evaluador, "CLI", "no-existe-claude-licitaperu")
     at = AppTest.from_file(APP, default_timeout=60).run()
-    assert "copia guardada del 10/11/2026 08:00" in at.warning[0].value
+    assert "IA en vivo no disponible en este servidor" in _textos(at)
+    next(b for b in at.button if b.label == "Ver caso de ejemplo").click().run()
+    assert not at.exception
+    assert at.subheader[0].value == "LP-SM-16-2026-MML-OGA-OL-1"
+    textos = _textos(at)
+    assert "Extracción guardada" in textos and "Caso de ejemplo" in at.info[0].value
+    assert "MUNICIPALIDAD METROPOLITANA DE LIMA" in textos and "fileCode=db513705" in textos
+    assert textos.count("Por verificar") >= 3 and "página 46 (texto por OCR)" in textos
+    assert "página 22 (texto del PDF)" in textos and "página 50 (texto por OCR)" in textos
+
+    def estados():
+        return [m.value for m in at.markdown if "Verificado en el texto" in m.value or "Por verificar]" in m.value]
+
+    def lista():
+        return next(m.value for m in at.markdown if m.value.startswith("**Tu lista:"))
+
+    antes = estados()
+    assert lista() == "**Tu lista: 0 de 3 marcados · 3 por verificar en las bases**"
+    casillas = [c for c in at.checkbox if c.label == "Lo tengo"]
+    assert len(casillas) == 3
+    casillas[0].check().run()
+    assert lista() == "**Tu lista: 1 de 3 marcados · 3 por verificar en las bases**" and estados() == antes
+    [c for c in at.checkbox if c.label == "Lo tengo"][2].check().run()
+    assert lista() == "**Tu lista: 2 de 3 marcados · 3 por verificar en las bases**" and estados() == antes
+    [c for c in at.checkbox if c.label == "Lo tengo"][0].uncheck().run()
+    assert lista() == "**Tu lista: 1 de 3 marcados · 3 por verificar en las bases**" and estados() == antes
+    next(b for b in at.button if b.label == "Volver al radar").click().run()
+    assert "No se pudo consultar el radar" in at.error[0].value   # vuelve al radar (aquí sin red)
