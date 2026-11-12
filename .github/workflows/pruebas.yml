@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
       - name: Python 3.13
         run: uv python install 3.13
       - name: Dependencias (sin el grupo ocr)
@@ -23,6 +25,7 @@ jobs:
           uv run streamlit run app.py --server.headless true --server.port 8501 > streamlit.log 2>&1 &
           for i in $(seq 1 45); do curl -sf http://localhost:8501/_stcore/health && break; sleep 2; done
           curl -sf http://localhost:8501/_stcore/health
+          pkill -f "streamlit run app.py" || true   # que no quede un proceso de uv abierto al cerrar el trabajo
       - name: ¿Responde el SEACE desde la nube? (informativo)
         run: |
           curl -s -o /dev/null --max-time 30 -w "HTTP %{http_code}\n" \
