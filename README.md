@@ -4,7 +4,7 @@
 
 Proyecto final de la Diplomatura de Especialización en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP), [issue #204](https://github.com/d2cml-ai/Data-Science-Python/issues/204).
 
-> **Estado (12/11/2026):** la demo completa (radar + evaluador con IA en vivo) **corre en local**. La app está lista para Streamlit Community Cloud con el radar y el **caso de ejemplo** (extracción guardada, sin PDF ni clave de API); la IA en vivo en la nube queda pendiente porque requiere una clave de API con tope de gasto.
+> **Estado (12/11/2026):** **demo pública:** https://licitaperu-bnsgqejsugzyrj9jrq9qza.streamlit.app/ (radar en vivo del SEACE y **caso de ejemplo** con extracción guardada, sin PDF ni clave de API). La extracción con IA en vivo corre en local; en la nube queda pendiente porque requiere una clave de API con tope de gasto. **Video de respaldo:** [Google Drive](https://drive.google.com/file/d/1lau-2xy953EE-myBT6vBONMdCht71fyR/view?usp=sharing).
 
 ---
 
@@ -29,7 +29,7 @@ Soy Mirian de la Cruz Condori, estudiante de Ingeniería Económica. Mi experien
 
 **Cómo lo resuelve hoy.** El SEACE ofrece un buscador y la app «Oportunidades de negocio» (alertas por correo), pero no dice qué pide cada proceso: el proveedor lee el PDF completo o paga a un asesor. *Hipótesis por validar en las entrevistas.*
 
-**Conversaciones con usuarios potenciales:** [docs/research/](docs/research/). **PENDIENTE:** todavía no hay conversaciones registradas. Solo se anotarán las que se realicen; las plantillas están listas y no se completan con datos inventados.
+**Conversaciones con usuarios potenciales:** [docs/research/](docs/research/). **PENDIENTE:** todavía no hay entrevistas reales registradas; solo se anotarán las que se realicen. Para prepararlas hay [tres conversaciones simuladas](docs/research/conversaciones_simuladas.md) (no son evidencia de usuarios) que ordenan las hipótesis H1–H6 por validar: requisitos decisivos al inicio, documentos por etapa, citas en conflicto con sus páginas, carga del PDF, alternativa actual (Excel o asesor) y precio.
 
 ## 4. Solución e insight
 
@@ -51,6 +51,8 @@ Soy Mirian de la Cruz Condori, estudiante de Ingeniería Económica. Mi experien
 - **IA verificable:** los modelos actuales devuelven salidas que cumplen un **JSON Schema** y citan textualmente, lo que permite comprobar cada cita con código; y un **OCR abierto** (PaddleOCR) lee estas páginas en una laptop (confianza media 0.977; 0.99 sin contar la tabla girada de la p. 52 y el logotipo de la p. 66).
 
 ## 6. Demo
+
+**Demo pública:** https://licitaperu-bnsgqejsugzyrj9jrq9qza.streamlit.app/ — radar en vivo del SEACE (o datos de respaldo con su fecha si no responde) y **«Ver caso de ejemplo»** con la extracción guardada y el checklist. Verificada el 12/11/2026 en un navegador sin sesión. **Video de respaldo:** [Google Drive](https://drive.google.com/file/d/1lau-2xy953EE-myBT6vBONMdCht71fyR/view?usp=sharing).
 
 ### Cómo correrla en Windows (PowerShell)
 
@@ -183,7 +185,7 @@ El código, las pruebas y este README los generó **Claude Code** (modelo Claude
 - **Investigación de fuentes:** encontró los bloqueos (HTTP 403) del portal OCDS y de la descarga de documentos, y ubicó la API pública que usa la app oficial del SEACE. Verificó el filtro por departamento y detectó 299 ítems con fechas incoherentes.
 - **Código:** `radar.py`, `evaluador.py`, `ocr_bases.py`, `app.py`, los scripts de `herramientas/` y 35 pruebas sin red (`pruebas/`).
 - **Validación:** recorridos en Edge sin ventana, capturas y contraste manual de cada cita con el PDF y con las páginas escaneadas.
-- **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso, validó los resultados y escribió el apartado «Founder». **Pendiente:** las 3 conversaciones con usuarios, el video de respaldo y la URL pública del demo.
+- **Mirian:** eligió el problema y el caso, descargó el PDF, decidió el alcance de cada paso, validó los resultados, escribió el apartado «Founder», desplegó la demo pública y grabó el video. **Pendiente:** las 3 conversaciones reales con usuarios (las simuladas solo preparan las entrevistas).
 
 ---
 
